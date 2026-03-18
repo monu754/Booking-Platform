@@ -1,40 +1,40 @@
-# StagePass: Premium Show Booking Platform
+# StagePass
 
-A professional, high-end show booking ecosystem designed for elite performance venues.
+Premium show booking platform built as a monorepo with a React frontend and a Spring Boot backend.
 
-## Discover the StagePass Transformation
+StagePass supports public show discovery, seat selection, booking simulation, role-based admin and organizer management, venue management, profile editing, and Google sign-in.
 
-StagePass has been completely redesigned to deliver a premium, aesthetic, and professional experience. The platform seamlessly guides users from show discovery to secure seat reservations with a focus on visual excellence and operational security.
+## What This Project Includes
 
-### Key Experience Features
-
-- **Redesigned Identity**: A sophisticated Midnight & Royal visual theme using modern typography and glassmorphism.
-- **Fluid Discovery**: High-impact show cards and detailed performance timing matrices.
-- **Interactive Reservation**: Immersive seat selection maps with real-time feedback.
-- **Synchronized Checkout**: Professional receipt generation and simulated payment success/failure traces.
-- **HQ Control Room**: A data-centric administrative dashboard for system throughput and commercial visibility.
-- **Identity Control**: Robust user profile management and booking synchronization.
-
-- Real-time seat synchronization with WebSockets
-- Richer admin analytics and user management UI
+- Public show browsing and show detail pages
+- Seat selection and booking flow
+- Booking history for normal users
+- Role-based admin dashboard
+- Show management for admins and organizers
+- Venue management for admins
+- Organizer access scoped to assigned venues only
+- User management for admins
+- Profile update and account deletion
+- Email/password authentication
+- Google OAuth sign-in
+- Local in-memory development mode
+- MySQL persistent mode
 
 ## Monorepo Structure
 
 ```text
-show-booking-platform/
-├── apps/
-│   ├── frontend/        React + Vite app
-│   └── backend/         Spring Boot app
-├── packages/
-│   ├── ui/              Shared UI package
-│   ├── utils/           Shared helper functions
-│   └── types/           Shared request/response types
-├── infra/
-│   ├── database/        SQL schema and seed files
-│   └── docker/          Reserved for container setup
-├── docs/                Project docs and implementation notes
-├── pnpm-workspace.yaml
-└── package.json
+Booking platform/
+├─ apps/
+│  ├─ backend/          Spring Boot API
+│  └─ frontend/         React + Vite app
+├─ packages/
+│  ├─ types/            Shared TypeScript types
+│  ├─ ui/               Shared UI package
+│  └─ utils/            Shared helpers
+├─ infra/
+│  └─ database/         SQL schema and seed references
+├─ docs/                Project notes and architecture docs
+└─ README.md
 ```
 
 ## Tech Stack
@@ -42,113 +42,222 @@ show-booking-platform/
 ### Frontend
 
 - React 19
+- React Router 7
 - Vite
 - Tailwind CSS
-- React Router
 - Zustand
 - Axios
 
 ### Backend
 
-- Spring Boot 3
+- Spring Boot 3.4
 - Spring Security
 - Spring Data JPA
-- JWT via `jjwt`
-- WebSocket/STOMP configuration scaffold
-- H2 for local development
-- MySQL for persistent deployment
+- MySQL
+- H2
+- JWT
+- Google OAuth
+- WebSocket scaffold
 
-### Shared
+## Roles
 
-- PNPM workspace
-- Shared TypeScript packages in `packages/*`
+The application currently uses these roles internally:
 
-## RBAC Permission Table
+- `USER`
+- `ADMIN`
+- `ORGANIZER`
+- `STAFF`
 
-| Feature | USER | ADMIN | ORGANIZER | STAFF |
-|---|---:|---:|---:|---:|
-| Browse shows | Yes | Yes | Yes | Yes |
-| View show details and seat map | Yes | Yes | Yes | Yes |
-| Register / login | Yes | Yes | Yes | Yes |
-| Create bookings | Yes | No | No | No |
-| Simulate payment | Yes | No | No | No |
-| View own bookings | Yes | No | No | No |
-| Create / update shows | No | Yes | Yes | No |
-| Access admin area | No | Yes | Yes | No |
-| Manage users | Planned | Planned | No | No |
+Important note:
 
-## Demo Accounts
+- `STAFF` still exists in the backend enum for compatibility, but it is not exposed in the current admin UI.
+- In the active UI flows, only `USER`, `ADMIN`, and `ORGANIZER` are managed.
 
-These accounts are seeded automatically in the local profile:
+## Current Role Behavior
 
-| Role | Email | Password |
-|---|---|---|
-| USER | `user@stagepass.local` | `password123` |
-| ADMIN | `admin@stagepass.local` | `admin123` |
-| ORGANIZER | `organizer@stagepass.local` | `organizer123` |
+### USER
 
-## Backend Profiles
+- Can register and log in
+- Can browse shows
+- Can select seats
+- Can create bookings
+- Can view own bookings
+- Can edit own profile
+- Can delete own account
 
-### MySQL Profile
+### ADMIN
 
-Use the `mysql` profile when you want persistent data in MySQL.
+- Can access admin dashboard
+- Can manage shows
+- Can edit shows
+- Can manage venues
+- Can create users
+- Can change user roles
+- Can assign venues to organizers
+
+### ORGANIZER
+
+- Can access admin area
+- Can view only the shows for assigned venues
+- Can create and edit only shows belonging to assigned venues
+- Cannot manage users
+- Cannot create venues
+
+## Core Features
+
+### Public Experience
+
+- Home page
+- Show listing
+- Show details
+- Seat selection
+- Checkout simulation
+
+### User Experience
+
+- Email/password sign-in
+- Google sign-in
+- Booking history
+- Editable profile
+- Account deletion
+
+### Admin Experience
+
+- Dashboard metrics
+- Venue management
+- Show management
+- User provisioning
+- Role override
+- Organizer venue assignment
+
+## Venue and Organizer Rules
+
+This repo now supports venue-based organizer control.
+
+- Shows can belong to one or more venues
+- Organizers can be assigned one or more venues
+- Organizers can only see and manage shows linked to their assigned venues
+- Admins can manage all venues and all shows
+
+## Authentication Modes
+
+### Email and Password
+
+Users can:
+
+- Register through the register page
+- Log in through the login page
+- Update their credentials from the profile page
+
+### Google OAuth
+
+Google sign-in is implemented with:
+
+- backend start endpoint: `/api/auth/google`
+- backend callback endpoint: `/api/auth/google/callback`
+- frontend callback route: `/auth/google/callback`
+
+Google sign-in:
+
+- redirects the user to Google
+- exchanges the authorization code on the backend
+- fetches Google user info
+- creates a local account if the user does not exist
+- issues a normal JWT session used by the app
+
+## Profiles
+
+Users can now manage their own account from the profile page.
+
+Supported profile actions:
+
+- update full name
+- update email
+- change password
+- delete account
+
+Deleting an account immediately clears the local session and removes the user from the backend database.
+
+## Environment Configuration
+
+There are separate env files for frontend and backend.
+
+### Frontend Env
 
 File:
 
-- `apps/backend/src/main/resources/application-mysql.yml`
+- `apps/frontend/.env`
 
-Default MySQL settings:
+Example:
 
-- Host: `localhost`
-- Port: `3306`
-- Database: `show_booking_platform`
-- Username: `root`
-- Password: `root`
+```env
+VITE_API_BASE_URL=http://localhost:8080/api
+VITE_GOOGLE_AUTH_URL=http://localhost:8080/api/auth/google
+```
 
-Supported environment variables:
+### Backend Env
 
-- `DB_HOST`
-- `DB_PORT`
-- `DB_NAME`
-- `DB_USERNAME`
-- `DB_PASSWORD`
+File:
 
-Behavior:
+- `apps/backend/.env`
 
-- Uses MySQL as the primary persistent database
-- Automatically creates the database if it does not exist
-- Keeps your users, shows, bookings, seats, and payments across restarts
-- Seeds the demo login accounts if they are missing
-- Seeds the demo venue/show data only when the MySQL database is still empty
+Example:
 
-### Local Profile
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=show_booking_platform
+DB_USERNAME=root
+DB_PASSWORD=your_db_password
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:8080/api/auth/google/callback
+GOOGLE_FRONTEND_SUCCESS_URL=http://localhost:5173/auth/google/callback
+```
 
-The backend now defaults to the `local` profile so `mvn spring-boot:run` works without MySQL setup.
+Important:
 
-Behavior:
+- The backend is configured to import `apps/backend/.env`
+- The frontend reads `apps/frontend/.env` through Vite
+- Restart backend or frontend after changing env files
 
-- Uses in-memory H2 database
-- Seeds roles, demo users, seats, shows, and timings
-- Lets you run the project immediately without MySQL
+## Google OAuth Setup
 
-Files:
+Create a Google OAuth client in Google Cloud Console.
 
-- `apps/backend/src/main/resources/application.yml`
-- `apps/backend/src/main/resources/application-local.yml`
+Use:
 
-You can still override the MySQL settings with environment variables.
+- Authorized JavaScript origins:
+  - `http://localhost:5173`
+- Authorized redirect URIs:
+  - `http://localhost:8080/api/auth/google/callback`
 
-## Installation
+Then copy the client ID and client secret into:
 
-### Prerequisites
+- `apps/backend/.env`
 
-- Node.js 20+ recommended
-- npm
+Required backend keys:
+
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REDIRECT_URI`
+- `GOOGLE_FRONTEND_SUCCESS_URL`
+
+Required frontend key:
+
+- `VITE_GOOGLE_AUTH_URL=http://localhost:8080/api/auth/google`
+
+## Running the Project
+
+## Prerequisites
+
+- Node.js 20+
 - pnpm 10+
 - Java 17
 - Maven 3.9+
+- MySQL 8 if using persistent mode
 
-### Install Frontend Dependencies
+## Install Frontend Dependencies
 
 From the repository root:
 
@@ -156,226 +265,349 @@ From the repository root:
 pnpm install
 ```
 
-If `pnpm` is not installed:
+If pnpm is not installed:
 
 ```powershell
-npm install -g pnpm
+corepack enable
 ```
 
-## Running The Project
+## Option 1: Local Development Mode
 
-### Option 1: Run With MySQL
+This is the easiest way to run the app.
 
-Use this when you want persistent data.
+It uses:
 
-1. Start the backend:
+- H2 in-memory database
+- auto-seeded demo data
+- demo login accounts
 
-```powershell
-cd apps/backend
-$env:DB_USERNAME="root"
-$env:DB_PASSWORD="Monu24"
-mvn spring-boot:run "-Dspring-boot.run.profiles=mysql"
-```
-
-The backend starts on:
-
-- `http://localhost:8080`
-
-Demo accounts in MySQL mode:
-
-- `user@stagepass.local` / `password123`
-- `admin@stagepass.local` / `admin123`
-- `organizer@stagepass.local` / `organizer123`
-
-2. Start the frontend from the repository root:
-
-```powershell
-pnpm --filter frontend dev --host 0.0.0.0
-```
-
-The frontend starts on:
-
-- `http://localhost:5173`
-
-### Option 2: Local Development With H2
-
-This is the default mode and needs no MySQL connection:
+Backend:
 
 ```powershell
 cd apps/backend
 mvn spring-boot:run
 ```
 
-Then start the frontend:
+Frontend:
 
 ```powershell
-pnpm --filter frontend dev --host 0.0.0.0
+cd ..
+pnpm --filter frontend dev
 ```
 
-## Build Commands
+URLs:
 
-### Frontend Production Build
+- frontend: `http://localhost:5173`
+- backend: `http://localhost:8080`
 
-```powershell
-pnpm --filter frontend build
-```
+### Demo Accounts
 
-### Backend Compile Check
+Available in local mode:
+
+- `user@stagepass.local` / `password123`
+- `admin@stagepass.local` / `admin123`
+- `organizer@stagepass.local` / `organizer123`
+
+## Option 2: MySQL Persistent Mode
+
+Use this when you want data to persist between restarts.
+
+Before starting:
+
+- make sure MySQL is running
+- configure `apps/backend/.env`
+
+Backend:
 
 ```powershell
 cd apps/backend
+mvn spring-boot:run "-Dspring-boot.run.profiles=mysql"
+```
+
+Frontend:
+
+```powershell
+cd ..
+pnpm --filter frontend dev
+```
+
+### MySQL Mode Behavior
+
+- connects to MySQL using `apps/backend/.env`
+- creates the database if it does not exist
+- seeds demo accounts if they are missing
+- seeds demo venues, screens, seats, and shows only when the MySQL database is empty
+
+If the database already has venue/show data:
+
+- users may still be seeded if missing
+- venue/show demo records are not recreated
+
+## Common Startup Problems
+
+### Port 8080 already in use
+
+If backend fails with `Port 8080 was already in use`:
+
+```powershell
+netstat -ano | findstr :8080
+taskkill /PID <PID> /F
+```
+
+### MySQL access denied
+
+Check:
+
+- `DB_USERNAME`
+- `DB_PASSWORD`
+- MySQL service is running
+- `apps/backend/.env` is correct
+
+### Google login not working
+
+Check:
+
+- Google client ID and secret are correct
+- Google redirect URI exactly matches `http://localhost:8080/api/auth/google/callback`
+- backend restarted after env changes
+- frontend restarted after env changes
+
+## Scripts
+
+### Root
+
+```powershell
+pnpm install
+pnpm --filter frontend dev
+pnpm --filter frontend build
+pnpm --filter frontend typecheck
+```
+
+### Backend
+
+```powershell
+mvn spring-boot:run
+mvn spring-boot:run "-Dspring-boot.run.profiles=mysql"
 mvn -DskipTests compile
 ```
 
-## Core URLs
-
 ### Frontend
 
+```powershell
+pnpm --filter frontend dev
+pnpm --filter frontend build
+pnpm --filter frontend typecheck
+```
+
+## Main Routes
+
+### Public Routes
+
 - `/`
-- `/login`
-- `/register`
 - `/shows`
 - `/shows/:showId`
-- `/shows/:showId/seats?timingId=:id`
+- `/shows/:showId/seats`
+- `/login`
+- `/register`
+
+### Protected User Routes
+
 - `/checkout`
 - `/bookings`
 - `/profile`
-- `/admin`
 
-### Backend API
+### Admin and Organizer Routes
+
+- `/admin`
+- `/admin/shows`
+
+### Admin-only Routes
+
+- `/admin/users`
+- `/admin/venues`
+
+### Frontend OAuth Route
+
+- `/auth/google/callback`
+
+## Important Backend Endpoints
+
+### Auth
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `GET /api/auth/google`
+- `GET /api/auth/google/callback`
+
+### Shows
+
 - `GET /api/shows`
 - `GET /api/shows/{id}`
+- `GET /api/shows/manage`
 - `POST /api/shows`
 - `PUT /api/shows/{id}`
-- `GET /api/seats?showTimingId={id}`
+- `DELETE /api/shows/{id}`
+
+### Venues
+
+- `GET /api/venues`
+- `POST /api/venues`
+
+### Users
+
+- `GET /api/admin/users`
+- `POST /api/admin/users`
+- `PUT /api/admin/users/{id}/roles`
+- `PUT /api/users/me`
+- `DELETE /api/users/me`
+
+### Booking and Payment
+
+- `GET /api/seats`
 - `POST /api/bookings`
 - `GET /api/bookings/user`
 - `POST /api/payments/simulate`
 
-## Current Booking Flow
+## Database Notes
 
-1. User opens `/shows`
-2. User opens a show details page
-3. User selects a timing
-4. User selects seats
-5. Selected seats are stored in the frontend booking draft store
-6. Checkout creates a booking
-7. Checkout simulates payment success or failure
-8. Booking history reflects payment status and transaction ID
-
-## Security And Hardening Notes
-
-The following protections are currently implemented:
-
-- JWT-based authentication
-- Role-based endpoint protection with Spring Security method security
-- Public and protected route separation in the frontend
-- Password hashing with BCrypt
-- Duplicate email registration blocked
-- Duplicate seat booking blocked
-- Repeat successful payment blocked
-- Cross-user payment attempts blocked
-- Seat-to-show-timing screen mismatch blocked
-- Validation error responses returned as JSON
-- Error route exposure fixed so public failures do not appear as false authorization failures
-
-## Issues Found And Fixed During Local Verification
-
-During local hardening and test execution, the following issues were found and fixed:
-
-- Backend could not run locally without MySQL
-  - Fixed by adding an H2-backed `local` profile
-- Seed runner order caused startup failure
-  - Fixed with explicit runner ordering
-- Public show browsing returned `403`
-  - Root cause was a lazy-loading exception during show timing mapping
-  - Fixed with transactional read methods and public `/error`
-- Booking flow had no checkout state handoff
-  - Fixed with a dedicated frontend booking draft store
-- Payment flow was incomplete
-  - Fixed by adding backend payment simulation endpoint and frontend checkout integration
-- Booking history lacked payment metadata
-  - Fixed by enriching the booking response contract
-
-## Validation And Verification Performed
-
-The following checks were executed successfully in the local environment:
-
-- Frontend production build
-- Backend compile
-- Public `GET /api/shows`
-- Unauthorized access rejection for `GET /api/bookings/user`
-- User blocked from admin-only show creation
-- Admin allowed to create shows
-- Invalid seat booking rejected
-- Double booking rejected
-- Failed payment handled
-- Successful payment handled
-- Repeat successful payment rejected
-- Cross-user payment attempt rejected
-- Chrome opened in guest mode against the running frontend for manual sanity checking
-
-## Local API Behavior Summary
-
-Expected examples:
-
-- Anonymous `GET /api/shows` returns `200`
-- Anonymous `GET /api/bookings/user` returns `403`
-- Duplicate registration returns `400`
-- Invalid auth payload returns `400` with validation details
-- USER token cannot `POST /api/shows`
-- ADMIN token can `POST /api/shows`
-- Duplicate seat booking returns `400`
-- Payment on already confirmed booking returns `400`
-
-## Important Files
-
-Frontend:
-
-- `apps/frontend/src/router.tsx`
-- `apps/frontend/src/layouts/AppLayout.tsx`
-- `apps/frontend/src/pages/ShowListingPage.tsx`
-- `apps/frontend/src/pages/ShowDetailsPage.tsx`
-- `apps/frontend/src/pages/SeatSelectionPage.tsx`
-- `apps/frontend/src/pages/CheckoutPage.tsx`
-- `apps/frontend/src/pages/MyBookingsPage.tsx`
-- `apps/frontend/src/store/sessionStore.ts`
-- `apps/frontend/src/store/bookingStore.ts`
-
-Backend:
-
-- `apps/backend/src/main/java/com/showbooking/backend/config/SecurityConfig.java`
-- `apps/backend/src/main/java/com/showbooking/backend/config/DataInitializer.java`
-- `apps/backend/src/main/java/com/showbooking/backend/service/AuthService.java`
-- `apps/backend/src/main/java/com/showbooking/backend/service/ShowService.java`
-- `apps/backend/src/main/java/com/showbooking/backend/service/BookingService.java`
-- `apps/backend/src/main/java/com/showbooking/backend/service/PaymentService.java`
-- `apps/backend/src/main/java/com/showbooking/backend/controller/PaymentController.java`
-
-Database:
+The repo includes SQL reference files under:
 
 - `infra/database/schema.sql`
 - `infra/database/seed.sql`
 
-## Known Gaps
+The running app currently relies on JPA schema updates through Hibernate.
 
-These are not yet fully implemented:
+Key data areas:
 
-- Real-time seat locking and release with WebSockets
-- Complete admin analytics APIs and UI
-- Manage-users backend and frontend flows
-- Toast notifications
-- Skeleton loaders
-- Automated backend and frontend tests
-- Payment gateway integration beyond simulation
+- roles
+- users
+- venues
+- screens
+- seats
+- shows
+- show timings
+- bookings
+- payments
+- user-to-venue mapping
+- show-to-venue mapping
 
-## Recommended Next Steps
+## Current Admin Flows
 
-1. Implement WebSocket seat-lock events to reduce double booking race windows.
-2. Add admin analytics endpoints for revenue, bookings, and active shows.
-3. Add tests for auth, booking conflict, and payment edge cases.
-4. Add user management APIs and admin UI.
-5. Add toast notifications and skeleton states for richer UX polish.
+### Manage Users
+
+Admin can:
+
+- create new user accounts
+- assign `ADMIN`, `ORGANIZER`, or `USER`
+- assign venues when the selected role is `ORGANIZER`
+
+### Manage Venues
+
+Admin can:
+
+- add new venues
+- view existing venues
+
+### Manage Shows
+
+Admin can:
+
+- create shows
+- assign one or more venues to a show
+- upload or link poster images
+- edit shows
+- delete shows
+
+### Organizer Show Management
+
+Organizer can:
+
+- view only allowed shows
+- create shows for allowed venues only
+- edit only allowed shows
+
+## Profile Management
+
+Profile page supports:
+
+- changing full name
+- changing email
+- changing password
+- deleting account permanently
+
+Credential changes require the current password.
+
+## File Uploads
+
+Poster image uploads are stored under:
+
+- `apps/backend/uploads`
+
+This folder is ignored by git.
+
+## Git Ignore Strategy
+
+This repo uses layered `.gitignore` files:
+
+- root `.gitignore`
+- `apps/backend/.gitignore`
+- `apps/frontend/.gitignore`
+- `.m2/.gitignore`
+- `.codex-logs/.gitignore`
+
+These ignore:
+
+- local env files
+- build outputs
+- uploads
+- cache folders
+- IDE folders
+- log files
+
+## Current Limitations
+
+These areas are still simplified or incomplete:
+
+- payment is simulated, not connected to a real payment gateway
+- Google auth creates or logs in local users but does not yet support advanced account linking flows
+- show timing management UI is still limited compared to full production booking platforms
+- analytics are UI-focused and not fully backed by live business reporting APIs
+- WebSocket seat locking is scaffolded but not fully production-grade
+
+## Recommended Next Improvements
+
+- add screen management per venue
+- add show timing creation/edit UI
+- add richer booking analytics APIs
+- add stronger account recovery flow
+- add toast notifications throughout the app
+- add automated frontend and backend tests
+- add deployment configuration
+
+## Repository Setup Summary
+
+If someone clones this repo and wants the fastest successful run:
+
+1. Install Node, pnpm, Java, and Maven
+2. Run `pnpm install`
+3. Create `apps/frontend/.env`
+4. Create `apps/backend/.env`
+5. Start backend
+6. Start frontend
+7. Open `http://localhost:5173`
+
+For no-database setup:
+
+1. run backend in local mode
+2. use seeded demo credentials
+
+For persistent setup:
+
+1. configure MySQL
+2. configure backend `.env`
+3. run backend with `mysql` profile
+4. use MySQL-backed data
+
+## License
+
+No license file is currently included in this repository. Add one before public distribution if needed.
