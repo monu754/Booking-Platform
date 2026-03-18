@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import type { VenueSummary } from "@show-booking/types";
 import { getUsers, updateUserRoles, UserSummary, provisionUser } from "../../services/userService";
 import { Modal } from "../../components/Modal";
+import { getVenues } from "../../services/venueService";
 
 export function ManageUsersPage() {
   const [users, setUsers] = useState<UserSummary[]>([]);
@@ -9,6 +11,7 @@ export function ManageUsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null);
+  const [venues, setVenues] = useState<VenueSummary[]>([]);
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
@@ -16,7 +19,7 @@ export function ManageUsersPage() {
   });
 
   useEffect(() => {
-    fetchUsers();
+    void Promise.all([fetchUsers(), fetchVenues()]);
   }, []);
 
   const fetchUsers = async () => {
@@ -28,6 +31,15 @@ export function ManageUsersPage() {
       setError("Failed to synchronize identity database.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchVenues = async () => {
+    try {
+      const data = await getVenues();
+      setVenues(data);
+    } catch {
+      setVenues([]);
     }
   };
 
@@ -43,9 +55,9 @@ export function ManageUsersPage() {
     }
   };
 
-  const handleRoleUpdate = async (userId: number, roles: string[]) => {
+  const handleRoleUpdate = async (userId: number, roles: string[], venueIds: number[]) => {
     try {
-      await updateUserRoles(userId, roles);
+      await updateUserRoles(userId, roles, venueIds);
       setIsRoleModalOpen(false);
       setSelectedUser(null);
       fetchUsers();
@@ -53,6 +65,29 @@ export function ManageUsersPage() {
       console.error("Role update failed:", err);
       alert("Failed to update security clearance levels. Check logs for details.");
     }
+  };
+
+  const isOrganizerSelected = selectedUser?.roles.includes("ORGANIZER") ?? false;
+
+  const toggleSelectedVenue = (venueId: number) => {
+    setSelectedUser((current) => {
+      if (!current) return current;
+
+      const exists = current.organizerVenues.some((venue) => venue.id === venueId);
+      const venueToAdd = venues.find((venue) => venue.id === venueId);
+      if (!exists && !venueToAdd) {
+        return current;
+      }
+
+      const organizerVenues = exists
+        ? current.organizerVenues.filter((venue) => venue.id !== venueId)
+        : [...current.organizerVenues, venueToAdd as VenueSummary];
+
+      return {
+        ...current,
+        organizerVenues,
+      };
+    });
   };
 
   return (
@@ -148,7 +183,11 @@ export function ManageUsersPage() {
                  {["ADMIN", "ORGANIZER", "STAFF", "USER"].map((role) => (
                     <button
                       key={role}
-                      onClick={() => setSelectedUser(prev => prev ? { ...prev, roles: [role] } : null)}
+                      onClick={() => setSelectedUser(prev => prev ? {
+                        ...prev,
+                        roles: [role],
+                        organizerVenues: role === "ORGANIZER" ? prev.organizerVenues : [],
+                      } : null)}
                       className={`group relative overflow-hidden flex items-center justify-between p-6 rounded-3xl border transition-all ${
                         selectedUser?.roles.includes(role) 
                         ? "bg-brand-500/10 border-brand-500/50 text-brand-400" 
@@ -168,6 +207,42 @@ export function ManageUsersPage() {
                  ))}
               </div>
             </div>
+
+            {isOrganizerSelected && (
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Assigned Venues</label>
+                <div className="grid grid-cols-1 gap-3">
+                  {venues.map((venue) => {
+                    const selected = selectedUser?.organizerVenues.some((item) => item.id === venue.id) ?? false;
+                    return (
+                      <button
+                        key={venue.id}
+                        type="button"
+                        onClick={() => toggleSelectedVenue(venue.id)}
+                        className={`flex items-center justify-between rounded-2xl border p-4 text-left transition-all ${
+                          selected
+                            ? "border-brand-500/50 bg-brand-500/10 text-brand-300"
+                            : "border-white/10 bg-white/5 text-slate-400 hover:border-brand-500/30"
+                        }`}
+                      >
+                        <div>
+                          <p className="text-sm font-bold text-white">{venue.name}</p>
+                          <p className="mt-1 text-xs text-slate-400">{venue.city}</p>
+                        </div>
+                        {selected && (
+                          <svg className="h-5 w-5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-slate-500">
+                  Organizer accounts can manage only the shows linked to the venues selected here.
+                </p>
+              </div>
+            )}
             
             <div className="pt-6 flex justify-end gap-4 border-t border-white/5">
                 <button 
@@ -179,7 +254,11 @@ export function ManageUsersPage() {
                 </button>
                 <button 
                   type="button"
-                  onClick={() => selectedUser && handleRoleUpdate(selectedUser.id, selectedUser.roles)}
+                  onClick={() => selectedUser && handleRoleUpdate(
+                    selectedUser.id,
+                    selectedUser.roles,
+                    selectedUser.organizerVenues.map((venue) => venue.id),
+                  )}
                   className="btn-premium px-12 py-4"
                 >
                   Synchronize Authorization
@@ -268,6 +347,11 @@ export function ManageUsersPage() {
                                  </span>
                                ))}
                             </div>
+                            {user.organizerVenues.length > 0 && (
+                              <p className="mt-3 text-xs text-slate-500">
+                                Venues: {user.organizerVenues.map((venue) => venue.name).join(", ")}
+                              </p>
+                            )}
                          </td>
                          <td className="px-10 py-6 text-xs text-slate-500 font-medium">
                             {new Date(user.createdAt).toLocaleDateString()}

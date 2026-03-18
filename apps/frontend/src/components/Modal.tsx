@@ -11,9 +11,10 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center p-6 bg-premium/80 backdrop-blur-md overflow-y-auto pt-20 pb-20">
-      <div className="w-full max-w-2xl bg-surface-950 border border-white/10 rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-        <div className="px-10 py-8 border-b border-white/5 flex items-center justify-between">
+    <div className="fixed inset-0 z-[100] bg-premium/80 p-3 backdrop-blur-md sm:p-6">
+      <div className="flex h-full items-center justify-center">
+        <div className="flex h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-[40px] border border-white/10 bg-surface-950 shadow-2xl animate-in fade-in zoom-in duration-300">
+          <div className="flex items-center justify-between border-b border-white/5 px-6 py-5 sm:px-10 sm:py-8">
           <h2 className="font-display text-2xl font-black text-white">{title}</h2>
           <button 
             onClick={onClose}
@@ -23,9 +24,10 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-        </div>
-        <div className="p-10 max-h-[70vh] overflow-y-auto custom-scrollbar">
-          {children}
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 custom-scrollbar sm:px-10 sm:py-8">
+            {children}
+          </div>
         </div>
       </div>
     </div>

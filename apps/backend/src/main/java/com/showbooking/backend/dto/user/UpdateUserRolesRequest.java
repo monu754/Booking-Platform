@@ -12,4 +12,6 @@ public class UpdateUserRolesRequest {
 
     @NotEmpty
     private List<String> roles;
+
+    private List<Long> venueIds;
 }

@@ -1,10 +1,18 @@
 export type AppRole = "USER" | "ADMIN" | "ORGANIZER" | "STAFF";
 
+export type VenueSummary = {
+  id: number;
+  name: string;
+  city: string;
+  address: string;
+};
+
 export type AuthPayload = {
   token: string;
   name: string;
   email: string;
   roles: AppRole[];
+  venueIds: number[];
 };
 
 export type ShowTimingSummary = {
@@ -24,6 +32,7 @@ export type ShowSummary = {
   language: string;
   genre: string;
   posterUrl: string;
+  venues: VenueSummary[];
   timings?: ShowTimingSummary[];
 };
 

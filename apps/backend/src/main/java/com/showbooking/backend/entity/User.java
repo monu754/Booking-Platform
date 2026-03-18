@@ -38,6 +38,14 @@ public class User {
     )
     private Set<Role> roles = new HashSet<>();
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "user_venues",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "venue_id")
+    )
+    private Set<Venue> venues = new HashSet<>();
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) {

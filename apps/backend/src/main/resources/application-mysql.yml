@@ -10,4 +10,4 @@ spring:
 
 app:
   seed:
-    demo-data: false
+    demo-data: true

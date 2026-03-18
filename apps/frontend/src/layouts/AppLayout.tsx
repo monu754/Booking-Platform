@@ -17,6 +17,9 @@ export function AppLayout() {
   const isHomePage = location.pathname === "/";
 
   const filteredNavItems = navItems.filter(item => {
+    if (item.to === "/bookings") {
+      return !roles.includes("ADMIN") && !roles.includes("ORGANIZER");
+    }
     if (item.to.startsWith("/admin")) {
       return roles.includes("ADMIN") || roles.includes("ORGANIZER");
     }

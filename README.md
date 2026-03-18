@@ -91,7 +91,7 @@ These accounts are seeded automatically in the local profile:
 
 ### MySQL Profile
 
-The backend now defaults to the `mysql` profile so application data persists in MySQL by default.
+Use the `mysql` profile when you want persistent data in MySQL.
 
 File:
 
@@ -118,11 +118,12 @@ Behavior:
 - Uses MySQL as the primary persistent database
 - Automatically creates the database if it does not exist
 - Keeps your users, shows, bookings, seats, and payments across restarts
-- Does not auto-seed demo venue/show data
+- Seeds the demo login accounts if they are missing
+- Seeds the demo venue/show data only when the MySQL database is still empty
 
 ### Local Profile
 
-Use the `local` profile only when you explicitly want the in-memory demo environment.
+The backend now defaults to the `local` profile so `mvn spring-boot:run` works without MySQL setup.
 
 Behavior:
 
@@ -165,18 +166,26 @@ npm install -g pnpm
 
 ### Option 1: Run With MySQL
 
-This is the default and recommended mode.
+Use this when you want persistent data.
 
 1. Start the backend:
 
 ```powershell
 cd apps/backend
-mvn spring-boot:run
+$env:DB_USERNAME="root"
+$env:DB_PASSWORD="Monu24"
+mvn spring-boot:run "-Dspring-boot.run.profiles=mysql"
 ```
 
 The backend starts on:
 
 - `http://localhost:8080`
+
+Demo accounts in MySQL mode:
+
+- `user@stagepass.local` / `password123`
+- `admin@stagepass.local` / `admin123`
+- `organizer@stagepass.local` / `organizer123`
 
 2. Start the frontend from the repository root:
 
@@ -190,11 +199,11 @@ The frontend starts on:
 
 ### Option 2: Local Development With H2
 
-Start the backend with the local profile:
+This is the default mode and needs no MySQL connection:
 
 ```powershell
 cd apps/backend
-mvn spring-boot:run "-Dspring-boot.run.profiles=local"
+mvn spring-boot:run
 ```
 
 Then start the frontend:

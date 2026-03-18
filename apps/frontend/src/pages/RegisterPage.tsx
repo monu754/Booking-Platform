@@ -24,6 +24,7 @@ export function RegisterPage() {
         roles: payload.roles,
         userName: payload.name,
         email: payload.email,
+        venueIds: payload.venueIds,
       });
       navigate("/", { replace: true });
     } catch {
@@ -104,4 +105,3 @@ export function RegisterPage() {
     </div>
   );
 }
-

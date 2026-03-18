@@ -57,19 +57,22 @@ public class DataInitializer {
         PasswordEncoder passwordEncoder
     ) {
         return args -> {
+            seedUserIfMissing(userRepository, roleRepository, passwordEncoder, "Demo User", "user@stagepass.local", "password123", AppRole.USER);
+            seedUserIfMissing(userRepository, roleRepository, passwordEncoder, "Admin User", "admin@stagepass.local", "admin123", AppRole.ADMIN);
+            User organizer = seedUserIfMissing(userRepository, roleRepository, passwordEncoder, "Organizer User", "organizer@stagepass.local", "organizer123", AppRole.ORGANIZER);
+
             if (venueRepository.count() > 0 || screenRepository.count() > 0 || showRepository.count() > 0 || showTimingRepository.count() > 0) {
                 return;
             }
-
-            seedUserIfMissing(userRepository, roleRepository, passwordEncoder, "Demo User", "user@stagepass.local", "password123", AppRole.USER);
-            seedUserIfMissing(userRepository, roleRepository, passwordEncoder, "Admin User", "admin@stagepass.local", "admin123", AppRole.ADMIN);
-            seedUserIfMissing(userRepository, roleRepository, passwordEncoder, "Organizer User", "organizer@stagepass.local", "organizer123", AppRole.ORGANIZER);
 
             Venue venue = new Venue();
             venue.setName("Skyline Arena");
             venue.setCity("Bengaluru");
             venue.setAddress("12 Residency Road");
             Venue savedVenue = venueRepository.save(venue);
+
+            organizer.getVenues().add(savedVenue);
+            userRepository.save(organizer);
 
             Screen screen = new Screen();
             screen.setVenue(savedVenue);
@@ -96,6 +99,7 @@ public class DataInitializer {
             midnightEchoes.setLanguage("English");
             midnightEchoes.setGenre("Thriller");
             midnightEchoes.setPosterUrl("https://picsum.photos/seed/midnight/800/1200");
+            midnightEchoes.getVenues().add(savedVenue);
             Show savedMidnightEchoes = showRepository.save(midnightEchoes);
 
             Show ragaAndRain = new Show();
@@ -105,6 +109,7 @@ public class DataInitializer {
             ragaAndRain.setLanguage("Hindi");
             ragaAndRain.setGenre("Musical");
             ragaAndRain.setPosterUrl("https://picsum.photos/seed/raga/800/1200");
+            ragaAndRain.getVenues().add(savedVenue);
             Show savedRagaAndRain = showRepository.save(ragaAndRain);
             
             Show neonNoir = new Show();
@@ -114,6 +119,7 @@ public class DataInitializer {
             neonNoir.setLanguage("English");
             neonNoir.setGenre("Musical");
             neonNoir.setPosterUrl("https://picsum.photos/seed/neon/800/1200");
+            neonNoir.getVenues().add(savedVenue);
             Show savedNeonNoir = showRepository.save(neonNoir);
 
             Show silentOpera = new Show();
@@ -123,6 +129,7 @@ public class DataInitializer {
             silentOpera.setLanguage("None");
             silentOpera.setGenre("Opera");
             silentOpera.setPosterUrl("https://picsum.photos/seed/opera/800/1200");
+            silentOpera.getVenues().add(savedVenue);
             Show savedSilentOpera = showRepository.save(silentOpera);
 
             Show jazzNights = new Show();
@@ -132,6 +139,7 @@ public class DataInitializer {
             jazzNights.setLanguage("English");
             jazzNights.setGenre("Jazz");
             jazzNights.setPosterUrl("https://picsum.photos/seed/jazz/800/1200");
+            jazzNights.getVenues().add(savedVenue);
             Show savedJazzNights = showRepository.save( jazzNights);
 
             Show grandBroadway = new Show();
@@ -141,6 +149,7 @@ public class DataInitializer {
             grandBroadway.setLanguage("English");
             grandBroadway.setGenre("Theater");
             grandBroadway.setPosterUrl("https://picsum.photos/seed/broadway/800/1200");
+            grandBroadway.getVenues().add(savedVenue);
             Show savedGrandBroadway = showRepository.save(grandBroadway);
 
             createTiming(showTimingRepository, savedMidnightEchoes, savedScreen, LocalDateTime.now().plusDays(1).withHour(19).withMinute(30), BigDecimal.valueOf(1250));
@@ -168,7 +177,7 @@ public class DataInitializer {
         showTimingRepository.save(timing);
     }
 
-    private void seedUserIfMissing(
+    private User seedUserIfMissing(
         UserRepository userRepository,
         RoleRepository roleRepository,
         PasswordEncoder passwordEncoder,
@@ -178,7 +187,8 @@ public class DataInitializer {
         AppRole roleName
     ) {
         if (userRepository.existsByEmail(email)) {
-            return;
+            return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("User lookup failed for " + email));
         }
 
         Role role = roleRepository.findByName(roleName)
@@ -189,6 +199,6 @@ public class DataInitializer {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.getRoles().add(role);
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 }

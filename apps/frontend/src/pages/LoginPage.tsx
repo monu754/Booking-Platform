@@ -24,6 +24,7 @@ export function LoginPage() {
         roles: payload.roles,
         userName: payload.name,
         email: payload.email,
+        venueIds: payload.venueIds,
       });
       const from = (location.state as { from?: string } | null)?.from ?? "/";
       navigate(from, { replace: true });
@@ -96,4 +97,3 @@ export function LoginPage() {
     </div>
   );
 }
-

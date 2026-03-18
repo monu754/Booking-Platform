@@ -64,7 +64,8 @@ public class AuthService {
             jwtService.generateToken(securityUser),
             savedUser.getName(),
             savedUser.getEmail(),
-            savedUser.getRoles().stream().map(role -> role.getName().name()).toList()
+            savedUser.getRoles().stream().map(role -> role.getName().name()).toList(),
+            savedUser.getVenues().stream().map(venue -> venue.getId()).toList()
         );
     }
 
@@ -82,7 +83,8 @@ public class AuthService {
             jwtService.generateToken(securityUser),
             user.getName(),
             user.getEmail(),
-            user.getRoles().stream().map(role -> role.getName().name()).toList()
+            user.getRoles().stream().map(role -> role.getName().name()).toList(),
+            user.getVenues().stream().map(venue -> venue.getId()).toList()
         );
     }
 }

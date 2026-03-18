@@ -26,6 +26,14 @@ CREATE TABLE venues (
     address VARCHAR(255) NOT NULL
 );
 
+CREATE TABLE user_venues (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    venue_id BIGINT NOT NULL,
+    CONSTRAINT fk_user_venues_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_user_venues_venue FOREIGN KEY (venue_id) REFERENCES venues(id)
+);
+
 CREATE TABLE screens (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     venue_id BIGINT NOT NULL,
@@ -51,6 +59,14 @@ CREATE TABLE shows (
     language VARCHAR(80) NOT NULL,
     genre VARCHAR(80) NOT NULL,
     poster_url VARCHAR(255)
+);
+
+CREATE TABLE show_venues (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    show_id BIGINT NOT NULL,
+    venue_id BIGINT NOT NULL,
+    CONSTRAINT fk_show_venues_show FOREIGN KEY (show_id) REFERENCES shows(id),
+    CONSTRAINT fk_show_venues_venue FOREIGN KEY (venue_id) REFERENCES venues(id)
 );
 
 CREATE TABLE show_timings (

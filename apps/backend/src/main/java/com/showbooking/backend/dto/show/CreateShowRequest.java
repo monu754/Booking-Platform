@@ -2,8 +2,11 @@ package com.showbooking.backend.dto.show;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -25,4 +28,7 @@ public class CreateShowRequest {
     private String genre;
 
     private String posterUrl;
+
+    @NotEmpty
+    private List<Long> venueIds;
 }

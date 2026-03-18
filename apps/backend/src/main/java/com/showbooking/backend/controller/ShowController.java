@@ -2,9 +2,11 @@ package com.showbooking.backend.controller;
 
 import com.showbooking.backend.dto.show.CreateShowRequest;
 import com.showbooking.backend.dto.show.ShowResponse;
+import com.showbooking.backend.security.SecurityUser;
 import com.showbooking.backend.service.ShowService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +26,12 @@ public class ShowController {
         return showService.getShows();
     }
 
+    @GetMapping("/manage")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    public List<ShowResponse> getManagedShows(@AuthenticationPrincipal SecurityUser securityUser) {
+        return showService.getManagedShows(securityUser.getId());
+    }
+
     @GetMapping("/{id}")
     public ShowResponse getShowById(@PathVariable("id") Long id) {
         return showService.getShowById(id);
@@ -33,11 +41,13 @@ public class ShowController {
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
     @ResponseStatus(HttpStatus.CREATED)
     public ShowResponse createShow(
+            @AuthenticationPrincipal SecurityUser securityUser,
             @RequestParam("title") String title,
             @RequestParam("description") String description,
             @RequestParam("duration") Integer duration,
             @RequestParam("language") String language,
             @RequestParam("genre") String genre,
+            @RequestParam("venueIds") List<Long> venueIds,
             @RequestParam(value = "posterUrl", required = false) String posterUrl,
             @RequestParam(value = "image", required = false) org.springframework.web.multipart.MultipartFile image) {
         
@@ -48,19 +58,22 @@ public class ShowController {
         request.setLanguage(language);
         request.setGenre(genre);
         request.setPosterUrl(posterUrl);
+        request.setVenueIds(venueIds);
         
-        return showService.createShow(request, image);
+        return showService.createShow(securityUser.getId(), request, image);
     }
 
     @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
     public ShowResponse updateShow(
+            @AuthenticationPrincipal SecurityUser securityUser,
             @PathVariable("id") Long id,
             @RequestParam("title") String title,
             @RequestParam("description") String description,
             @RequestParam("duration") Integer duration,
             @RequestParam("language") String language,
             @RequestParam("genre") String genre,
+            @RequestParam("venueIds") List<Long> venueIds,
             @RequestParam(value = "posterUrl", required = false) String posterUrl,
             @RequestParam(value = "image", required = false) org.springframework.web.multipart.MultipartFile image) {
         
@@ -71,14 +84,15 @@ public class ShowController {
         request.setLanguage(language);
         request.setGenre(genre);
         request.setPosterUrl(posterUrl);
+        request.setVenueIds(venueIds);
         
-        return showService.updateShow(id, request, image);
+        return showService.updateShow(securityUser.getId(), id, request, image);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteShow(@PathVariable("id") Long id) {
-        showService.deleteShow(id);
+    public void deleteShow(@AuthenticationPrincipal SecurityUser securityUser, @PathVariable("id") Long id) {
+        showService.deleteShow(securityUser.getId(), id);
     }
 }

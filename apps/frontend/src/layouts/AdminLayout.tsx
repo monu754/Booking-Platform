@@ -8,6 +8,9 @@ export function AdminLayout() {
     { to: "/admin", label: "Dashboard", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
     { to: "/admin/shows", label: "Shows", icon: "M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" },
     ...(isAdmin
+      ? [{ to: "/admin/venues", label: "Venues", icon: "M8 6.75V4.5m8 2.25V4.5M3.75 9.75h16.5M5.25 6h13.5A1.5 1.5 0 0120.25 7.5v11.25A1.5 1.5 0 0118.75 20.25H5.25a1.5 1.5 0 01-1.5-1.5V7.5A1.5 1.5 0 015.25 6zm3 7.5h7.5" }]
+      : []),
+    ...(isAdmin
       ? [{ to: "/admin/users", label: "Users", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" }]
       : []),
   ];

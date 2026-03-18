@@ -2,7 +2,7 @@ spring:
   application:
     name: show-booking-backend
   profiles:
-    default: mysql
+    default: local
   jpa:
     hibernate:
       ddl-auto: update

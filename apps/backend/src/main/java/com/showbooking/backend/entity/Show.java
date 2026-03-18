@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "shows")
 @Getter
@@ -31,4 +34,12 @@ public class Show {
 
     @Column(name = "poster_url")
     private String posterUrl;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "show_venues",
+        joinColumns = @JoinColumn(name = "show_id"),
+        inverseJoinColumns = @JoinColumn(name = "venue_id")
+    )
+    private Set<Venue> venues = new HashSet<>();
 }

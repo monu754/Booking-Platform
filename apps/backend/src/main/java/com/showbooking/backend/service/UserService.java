@@ -1,11 +1,14 @@
 package com.showbooking.backend.service;
 
 import com.showbooking.backend.dto.user.UserSummaryResponse;
+import com.showbooking.backend.dto.venue.VenueSummaryResponse;
 import com.showbooking.backend.entity.AppRole;
 import com.showbooking.backend.entity.Role;
 import com.showbooking.backend.entity.User;
+import com.showbooking.backend.entity.Venue;
 import com.showbooking.backend.repository.RoleRepository;
 import com.showbooking.backend.repository.UserRepository;
+import com.showbooking.backend.repository.VenueRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,11 +27,13 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final VenueRepository venueRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, VenueRepository venueRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.venueRepository = venueRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -70,12 +75,13 @@ public class UserService {
                 user.getName(),
                 user.getEmail(),
                 user.getRoles().stream().map(role -> role.getName().name()).toList(),
+                user.getVenues().stream().map(this::mapVenue).toList(),
                 user.getCreatedAt()
         );
     }
 
     @Transactional
-    public UserSummaryResponse updateUserRoles(Long userId, List<String> roleNames) {
+    public UserSummaryResponse updateUserRoles(Long userId, List<String> roleNames, List<Long> venueIds) {
         if (roleNames == null || roleNames.isEmpty()) {
             throw new IllegalArgumentException("At least one role must be assigned");
         }
@@ -89,6 +95,17 @@ public class UserService {
             .collect(Collectors.toSet());
 
         user.setRoles(newRoles);
+        if (roleNames.contains(AppRole.ORGANIZER.name())) {
+            Set<Venue> assignedVenues = venueIds == null
+                ? Set.of()
+                : venueIds.stream()
+                    .map(venueId -> venueRepository.findById(venueId)
+                        .orElseThrow(() -> new EntityNotFoundException("Venue not found: " + venueId)))
+                    .collect(Collectors.toSet());
+            user.setVenues(assignedVenues);
+        } else {
+            user.getVenues().clear();
+        }
         User savedUser = userRepository.save(user);
 
         return mapToResponse(savedUser);
@@ -111,5 +128,14 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
         return mapToResponse(savedUser);
+    }
+
+    private VenueSummaryResponse mapVenue(Venue venue) {
+        return new VenueSummaryResponse(
+            venue.getId(),
+            venue.getName(),
+            venue.getCity(),
+            venue.getAddress()
+        );
     }
 }

@@ -1,3 +1,4 @@
+import type { VenueSummary } from "@show-booking/types";
 import { api } from "./api";
 
 export type UserSummary = {
@@ -6,6 +7,7 @@ export type UserSummary = {
   email: string;
   roles: string[];
   createdAt: string;
+  organizerVenues: VenueSummary[];
 };
 
 export async function getUsers(): Promise<UserSummary[]> {
@@ -18,7 +20,7 @@ export async function provisionUser(user: { name: string; email: string; passwor
   return response.data;
 }
 
-export async function updateUserRoles(userId: number, roles: string[]): Promise<UserSummary> {
-  const response = await api.put<UserSummary>(`/admin/users/${userId}/roles`, { roles });
+export async function updateUserRoles(userId: number, roles: string[], venueIds: number[] = []): Promise<UserSummary> {
+  const response = await api.put<UserSummary>(`/admin/users/${userId}/roles`, { roles, venueIds });
   return response.data;
 }
