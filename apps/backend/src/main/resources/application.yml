@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: show-booking-backend
+  profiles:
+    default: mysql
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: change-this-secret-for-local-dev-please-use-a-long-key-123456789
+    expiration-ms: 86400000
+  seed:
+    demo-data: false

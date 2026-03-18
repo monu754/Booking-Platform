@@ -1,0 +1,26 @@
+--810d08b1-dcfd-4322-a182-c6f62f31efcb
+Content-Disposition: form-data; name="title"
+
+Organizer Verification Show
+--810d08b1-dcfd-4322-a182-c6f62f31efcb
+Content-Disposition: form-data; name="description"
+
+Role matrix verification.
+--810d08b1-dcfd-4322-a182-c6f62f31efcb
+Content-Disposition: form-data; name="duration"
+
+95
+--810d08b1-dcfd-4322-a182-c6f62f31efcb
+Content-Disposition: form-data; name="language"
+
+English
+--810d08b1-dcfd-4322-a182-c6f62f31efcb
+Content-Disposition: form-data; name="genre"
+
+Theater
+--810d08b1-dcfd-4322-a182-c6f62f31efcb
+Content-Disposition: form-data; name="posterUrl"
+
+https://picsum.photos/seed/organizer-check/800/1200
+--810d08b1-dcfd-4322-a182-c6f62f31efcb--
+
