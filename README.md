@@ -564,26 +564,6 @@ These ignore:
 - IDE folders
 - log files
 
-## Current Limitations
-
-These areas are still simplified or incomplete:
-
-- payment is simulated, not connected to a real payment gateway
-- Google auth creates or logs in local users but does not yet support advanced account linking flows
-- show timing management UI is still limited compared to full production booking platforms
-- analytics are UI-focused and not fully backed by live business reporting APIs
-- WebSocket seat locking is scaffolded but not fully production-grade
-
-## Recommended Next Improvements
-
-- add screen management per venue
-- add show timing creation/edit UI
-- add richer booking analytics APIs
-- add stronger account recovery flow
-- add toast notifications throughout the app
-- add automated frontend and backend tests
-- add deployment configuration
-
 ## Repository Setup Summary
 
 If someone clones this repo and wants the fastest successful run:
