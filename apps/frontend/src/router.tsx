@@ -12,6 +12,7 @@ import { DashboardPage } from "./pages/admin/DashboardPage";
 import { ManageShowsPage } from "./pages/admin/ManageShowsPage";
 import { ManageUsersPage } from "./pages/admin/ManageUsersPage";
 import { ManageVenuesPage } from "./pages/admin/ManageVenuesPage";
+import { GoogleAuthCallbackPage } from "./pages/GoogleAuthCallbackPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: "auth/google/callback", element: <GoogleAuthCallbackPage /> },
       { path: "login", element: <LoginPage /> },
       { path: "register", element: <RegisterPage /> },
       { path: "shows", element: <ShowListingPage /> },

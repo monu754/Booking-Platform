@@ -2,6 +2,7 @@ package com.showbooking.backend.service;
 
 import com.showbooking.backend.dto.auth.AuthRequest;
 import com.showbooking.backend.dto.auth.AuthResponse;
+import com.showbooking.backend.dto.auth.GoogleUserInfoResponse;
 import com.showbooking.backend.dto.auth.RegisterRequest;
 import com.showbooking.backend.entity.AppRole;
 import com.showbooking.backend.entity.Role;
@@ -79,6 +80,38 @@ public class AuthService {
 
         SecurityUser securityUser = new SecurityUser(user);
 
+        return new AuthResponse(
+            jwtService.generateToken(securityUser),
+            user.getName(),
+            user.getEmail(),
+            user.getRoles().stream().map(role -> role.getName().name()).toList(),
+            user.getVenues().stream().map(venue -> venue.getId()).toList()
+        );
+    }
+
+    @Transactional
+    public AuthResponse loginWithGoogle(GoogleUserInfoResponse googleUser) {
+        if (googleUser.email() == null || googleUser.email().isBlank()) {
+            throw new IllegalArgumentException("Google account did not provide an email address");
+        }
+        if (!Boolean.TRUE.equals(googleUser.verifiedEmail())) {
+            throw new IllegalArgumentException("Google account email must be verified");
+        }
+
+        String normalizedEmail = googleUser.email().trim().toLowerCase();
+        User user = userRepository.findByEmail(normalizedEmail).orElseGet(() -> {
+            Role userRole = roleRepository.findByName(AppRole.USER)
+                .orElseThrow(() -> new EntityNotFoundException("USER role is not configured"));
+
+            User createdUser = new User();
+            createdUser.setName(googleUser.name() == null || googleUser.name().isBlank() ? normalizedEmail : googleUser.name().trim());
+            createdUser.setEmail(normalizedEmail);
+            createdUser.setPassword(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
+            createdUser.setRoles(Set.of(userRole));
+            return userRepository.save(createdUser);
+        });
+
+        SecurityUser securityUser = new SecurityUser(user);
         return new AuthResponse(
             jwtService.generateToken(securityUser),
             user.getName(),

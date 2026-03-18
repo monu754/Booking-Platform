@@ -1,16 +1,20 @@
 import { useState, type FormEvent } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { login } from "../services/authService";
 import { useSessionStore } from "../store/sessionStore";
+
+const googleAuthUrl = import.meta.env.VITE_GOOGLE_AUTH_URL;
 
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const setSession = useSessionStore((state) => state.setSession);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(searchParams.get("googleError"));
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,6 +39,15 @@ export function LoginPage() {
     }
   }
 
+  function handleGoogleContinue() {
+    if (googleAuthUrl) {
+      window.location.href = googleAuthUrl;
+      return;
+    }
+
+    setError("Google sign-in placeholder is ready. Add VITE_GOOGLE_AUTH_URL to enable it.");
+  }
+
   return (
     <div className="mx-auto max-w-xl">
       <div className="overflow-hidden rounded-[40px] border border-surface-200 bg-white shadow-premium">
@@ -56,24 +69,46 @@ export function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <div className="flex justify-between">
-                <label className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-400">Password</label>
-                <a href="#" className="text-xs font-bold text-brand-600 transition-colors hover:text-brand-700">Forgot?</a>
+              <label className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-400">Password</label>
+              <div className="relative">
+                <input
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  type={showPassword ? "text" : "password"}
+                  required
+                  placeholder="Enter your password"
+                  className="w-full rounded-2xl border border-surface-200 bg-surface-50 px-6 py-4 pr-28 text-premium outline-none transition-all focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 placeholder:text-slate-300"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest text-brand-600 shadow-sm transition-colors hover:text-brand-700"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
               </div>
-              <input
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                type="password"
-                required
-                placeholder="Enter your password"
-                className="w-full rounded-2xl border border-surface-200 bg-surface-50 px-6 py-4 text-premium outline-none transition-all focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 placeholder:text-slate-300"
-              />
             </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleContinue}
+              className="flex w-full items-center justify-center gap-3 rounded-2xl border border-surface-200 bg-white px-6 py-4 text-sm font-semibold text-premium transition-all hover:border-brand-200 hover:bg-surface-50"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="#EA4335" d="M12 11.8v3.9h5.5c-.2 1.3-1.5 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.9 4.8 14.7 4 12 4 7.6 4 4 7.6 4 12s3.6 8 8 8c4.6 0 7.6-3.2 7.6-7.8 0-.5-.1-.9-.1-1.3H12z" />
+                <path fill="#34A853" d="M4 12c0 1.4.4 2.8 1.2 4l3.2-2.5c-.2-.5-.4-1-.4-1.5s.1-1 .4-1.5L5.2 8C4.4 9.2 4 10.6 4 12z" />
+                <path fill="#FBBC05" d="M12 20c2.7 0 4.9-.9 6.5-2.5l-3.2-2.6c-.9.6-2 .9-3.3.9-2.5 0-4.6-1.7-5.4-4l-3.2 2.5C4.8 17.7 8.1 20 12 20z" />
+                <path fill="#4285F4" d="M18.5 17.5c1.6-1.5 2.6-3.8 2.6-6.4 0-.5-.1-.9-.1-1.3H12v3.9h5.5c-.3 1.4-1.1 2.8-2.2 3.8l3.2 2.6z" />
+              </svg>
+              Continue with Google
+            </button>
+
             {error ? (
               <div className="animate-shake rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600">
                 {error}
               </div>
             ) : null}
+
             <button type="submit" disabled={loading} className="btn-premium mt-4 flex w-full items-center justify-center disabled:opacity-50">
               {loading ? (
                 <svg className="h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">

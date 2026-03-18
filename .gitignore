@@ -10,3 +10,7 @@ coverage
 .env.local
 target
 .pnpm-store
+*.tsbuildinfo
+uploads
+.m2/
+.codex-logs/

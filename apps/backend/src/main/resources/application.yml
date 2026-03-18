@@ -1,6 +1,8 @@
 spring:
   application:
     name: show-booking-backend
+  config:
+    import: optional:file:.env[.properties]
   profiles:
     default: local
   jpa:
@@ -17,5 +19,10 @@ app:
   jwt:
     secret: change-this-secret-for-local-dev-please-use-a-long-key-123456789
     expiration-ms: 86400000
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/api/auth/google/callback}
+    frontend-success-url: ${GOOGLE_FRONTEND_SUCCESS_URL:http://localhost:5173/auth/google/callback}
   seed:
     demo-data: false

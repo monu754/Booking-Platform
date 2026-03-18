@@ -1,5 +1,8 @@
 package com.showbooking.backend.service;
 
+import com.showbooking.backend.dto.auth.AuthResponse;
+import com.showbooking.backend.dto.user.DeleteAccountRequest;
+import com.showbooking.backend.dto.user.UpdateProfileRequest;
 import com.showbooking.backend.dto.user.UserSummaryResponse;
 import com.showbooking.backend.dto.venue.VenueSummaryResponse;
 import com.showbooking.backend.entity.AppRole;
@@ -9,6 +12,8 @@ import com.showbooking.backend.entity.Venue;
 import com.showbooking.backend.repository.RoleRepository;
 import com.showbooking.backend.repository.UserRepository;
 import com.showbooking.backend.repository.VenueRepository;
+import com.showbooking.backend.security.JwtService;
+import com.showbooking.backend.security.SecurityUser;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +34,20 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final VenueRepository venueRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, VenueRepository venueRepository, PasswordEncoder passwordEncoder) {
+    public UserService(
+        UserRepository userRepository,
+        RoleRepository roleRepository,
+        VenueRepository venueRepository,
+        PasswordEncoder passwordEncoder,
+        JwtService jwtService
+    ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.venueRepository = venueRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public List<UserSummaryResponse> getAllUsers() {
@@ -128,6 +141,49 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
         return mapToResponse(savedUser);
+    }
+
+    @Transactional
+    public AuthResponse updateProfile(Long userId, UpdateProfileRequest request) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+        if (userRepository.existsByEmailAndIdNot(normalizedEmail, userId)) {
+            throw new IllegalArgumentException("Email already registered");
+        }
+
+        user.setName(request.getName().trim());
+        user.setEmail(normalizedEmail);
+        if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getNewPassword().trim()));
+        }
+
+        User savedUser = userRepository.save(user);
+        SecurityUser securityUser = new SecurityUser(savedUser);
+        return new AuthResponse(
+            jwtService.generateToken(securityUser),
+            savedUser.getName(),
+            savedUser.getEmail(),
+            savedUser.getRoles().stream().map(role -> role.getName().name()).toList(),
+            savedUser.getVenues().stream().map(venue -> venue.getId()).toList()
+        );
+    }
+
+    @Transactional
+    public void deleteProfile(Long userId, DeleteAccountRequest request) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        userRepository.delete(user);
     }
 
     private VenueSummaryResponse mapVenue(Venue venue) {
