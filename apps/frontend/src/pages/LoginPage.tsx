@@ -45,7 +45,7 @@ export function LoginPage() {
         <div className="p-12">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
+              <label className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-400">Email Address</label>
               <input
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -57,32 +57,28 @@ export function LoginPage() {
             </div>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Password</label>
-                <a href="#" className="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors">Forgot?</a>
+                <label className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-400">Password</label>
+                <a href="#" className="text-xs font-bold text-brand-600 transition-colors hover:text-brand-700">Forgot?</a>
               </div>
               <input
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 type="password"
                 required
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 className="w-full rounded-2xl border border-surface-200 bg-surface-50 px-6 py-4 text-premium outline-none transition-all focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 placeholder:text-slate-300"
               />
             </div>
             {error ? (
-              <div className="rounded-xl bg-red-50 p-4 text-sm font-medium text-red-600 border border-red-100 animate-shake">
+              <div className="animate-shake rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-600">
                 {error}
               </div>
             ) : null}
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-premium w-full mt-4 flex items-center justify-center disabled:opacity-50"
-            >
+            <button type="submit" disabled={loading} className="btn-premium mt-4 flex w-full items-center justify-center disabled:opacity-50">
               {loading ? (
                 <svg className="h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
               ) : "Authenticate"}
             </button>
