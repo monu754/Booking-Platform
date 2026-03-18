@@ -57,7 +57,7 @@ export function MyBookingsPage() {
                        <p className="text-xl font-black">#{booking.id}</p>
                     </div>
                     <div>
-                      <h3 className="text-lg font-black text-premium">Booking Synchronization</h3>
+                      <h3 className="text-lg font-black text-premium">{booking.showTitle || "Unknown Show"}</h3>
                       <p className="text-sm font-medium text-slate-400">
                         Placed on {new Date(booking.createdAt).toLocaleDateString()} at {new Date(booking.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>

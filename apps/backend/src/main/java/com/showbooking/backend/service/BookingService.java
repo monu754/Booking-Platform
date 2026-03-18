@@ -102,6 +102,10 @@ public class BookingService {
             .findFirst()
             .map(bookingSeat -> bookingSeat.getShowTiming().getId())
             .orElse(null);
+        String showTitle = bookingSeats.stream()
+            .findFirst()
+            .map(bookingSeat -> bookingSeat.getShowTiming().getShow().getTitle())
+            .orElse(null);
         Payment payment = paymentRepository.findByBooking_Id(booking.getId()).orElse(null);
 
         return new BookingResponse(
@@ -111,6 +115,7 @@ public class BookingService {
             booking.getStatus().name(),
             booking.getCreatedAt(),
             showTimingId,
+            showTitle,
             seatIds,
             payment != null ? payment.getStatus().name() : null,
             payment != null ? payment.getTransactionId() : null,

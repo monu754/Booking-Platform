@@ -31,4 +31,7 @@ public class CreateShowRequest {
 
     @NotEmpty
     private List<Long> venueIds;
+
+    @NotEmpty
+    private List<CreateShowTimingRequest> timings;
 }

@@ -15,6 +15,13 @@ const defaultShowForm: ShowFormPayload = {
   genre: "Theater",
   posterUrl: "",
   venueIds: [],
+  timings: [
+    {
+      venueId: 0,
+      startTime: "",
+      price: 499,
+    },
+  ],
 };
 
 export function ManageShowsPage() {
@@ -77,6 +84,12 @@ export function ManageShowsPage() {
   }
 
   function openEditModal(show: ShowSummary) {
+    const existingTimings = (show.timings ?? []).map((timing) => ({
+      venueId: timing.venueId,
+      startTime: toDateTimeInputValue(timing.startTime),
+      price: timing.price,
+    }));
+
     setEditingShow(show);
     setShowForm({
       title: show.title,
@@ -86,6 +99,15 @@ export function ManageShowsPage() {
       genre: show.genre,
       posterUrl: show.posterUrl,
       venueIds: show.venues.map((venue) => venue.id),
+      timings: existingTimings.length > 0
+        ? existingTimings
+        : [
+            {
+              venueId: show.venues[0]?.id ?? 0,
+              startTime: "",
+              price: 499,
+            },
+          ],
     });
     setImageSource("url");
     setSelectedFile(null);
@@ -94,11 +116,54 @@ export function ManageShowsPage() {
   }
 
   function toggleVenue(venueId: number) {
+    setShowForm((current) => {
+      const nextVenueIds = current.venueIds.includes(venueId)
+        ? current.venueIds.filter((id) => id !== venueId)
+        : [...current.venueIds, venueId];
+
+      return {
+        ...current,
+        venueIds: nextVenueIds,
+        timings: current.timings.map((timing) => ({
+          ...timing,
+          venueId: nextVenueIds.includes(timing.venueId) ? timing.venueId : (nextVenueIds[0] ?? 0),
+        })),
+      };
+    });
+  }
+
+  function addTiming() {
     setShowForm((current) => ({
       ...current,
-      venueIds: current.venueIds.includes(venueId)
-        ? current.venueIds.filter((id) => id !== venueId)
-        : [...current.venueIds, venueId],
+      timings: [
+        ...current.timings,
+        {
+          venueId: current.venueIds[0] ?? 0,
+          startTime: "",
+          price: 499,
+        },
+      ],
+    }));
+  }
+
+  function updateTiming(index: number, field: "venueId" | "startTime" | "price", value: number | string) {
+    setShowForm((current) => ({
+      ...current,
+      timings: current.timings.map((timing, timingIndex) =>
+        timingIndex === index
+          ? {
+              ...timing,
+              [field]: field === "price" || field === "venueId" ? Number(value) : value,
+            }
+          : timing,
+      ),
+    }));
+  }
+
+  function removeTiming(index: number) {
+    setShowForm((current) => ({
+      ...current,
+      timings: current.timings.length === 1 ? current.timings : current.timings.filter((_, timingIndex) => timingIndex !== index),
     }));
   }
 
@@ -107,6 +172,11 @@ export function ManageShowsPage() {
 
     if (showForm.venueIds.length === 0) {
       setFormError("Select at least one venue for this show.");
+      return;
+    }
+
+    if (showForm.timings.length === 0 || showForm.timings.some((timing) => !timing.venueId || !timing.startTime || timing.price <= 0)) {
+      setFormError("Add at least one valid schedule with venue, date, time, and price.");
       return;
     }
 
@@ -131,8 +201,8 @@ export function ManageShowsPage() {
     try {
       await deleteShow(id);
       setShows((current) => current.filter((show) => show.id !== id));
-    } catch {
-      alert("Failed to delete show.");
+    } catch (error) {
+      alert(readErrorMessage(error, "Failed to delete show."));
     }
   }
 
@@ -259,6 +329,81 @@ export function ManageShowsPage() {
                 No venues are assigned yet. Ask an admin to assign venue access before creating shows.
               </p>
             ) : null}
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Schedules</label>
+                <p className="mt-1 text-xs text-slate-500">Add the venue, date, and time users can book.</p>
+              </div>
+              <button
+                type="button"
+                onClick={addTiming}
+                className="rounded-xl border border-brand-500/30 bg-brand-500/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-brand-300 transition-all hover:bg-brand-500/20"
+              >
+                Add Schedule
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {showForm.timings.map((timing, index) => (
+                <div key={`${index}-${timing.startTime}`} className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+                  <div className="mb-4 flex items-center justify-between">
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">Schedule {index + 1}</p>
+                    <button
+                      type="button"
+                      onClick={() => removeTiming(index)}
+                      disabled={showForm.timings.length === 1}
+                      className="text-xs font-bold text-slate-500 transition-colors hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Venue</label>
+                      <select
+                        required
+                        value={timing.venueId}
+                        onChange={(event) => updateTiming(index, "venueId", Number(event.target.value))}
+                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-white outline-none transition-all focus:border-brand-500"
+                      >
+                        <option value={0} className="bg-slate-900">Select venue</option>
+                        {availableVenues
+                          .filter((venue) => showForm.venueIds.includes(venue.id))
+                          .map((venue) => (
+                            <option key={venue.id} value={venue.id} className="bg-slate-900">
+                              {venue.name}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Date & Time</label>
+                      <input
+                        type="datetime-local"
+                        required
+                        value={timing.startTime}
+                        onChange={(event) => updateTiming(index, "startTime", event.target.value)}
+                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-white outline-none transition-all focus:border-brand-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Ticket Price</label>
+                      <input
+                        type="number"
+                        min={1}
+                        required
+                        value={timing.price}
+                        onChange={(event) => updateTiming(index, "price", Number(event.target.value))}
+                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-white outline-none transition-all focus:border-brand-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -436,4 +581,14 @@ function readErrorMessage(error: unknown, fallback: string) {
   }
 
   return fallback;
+}
+
+function toDateTimeInputValue(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const timezoneOffset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
 }

@@ -11,6 +11,7 @@ public record BookingResponse(
     String status,
     LocalDateTime createdAt,
     Long showTimingId,
+    String showTitle,
     List<Long> seatIds,
     String paymentStatus,
     String transactionId,

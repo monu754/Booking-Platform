@@ -18,6 +18,7 @@ export type AuthPayload = {
 export type ShowTimingSummary = {
   id: number;
   screenName: string;
+  venueId: number;
   venueName: string;
   venueCity: string;
   startTime: string;
@@ -50,6 +51,7 @@ export type BookingSummary = {
   status: string;
   createdAt: string;
   showTimingId: number | null;
+  showTitle: string | null;
   seatIds: number[];
   paymentStatus: string | null;
   transactionId: string | null;

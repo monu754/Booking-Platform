@@ -13,9 +13,11 @@ import java.util.List;
 public class VenueService {
 
     private final VenueRepository venueRepository;
+    private final VenueInfrastructureService venueInfrastructureService;
 
-    public VenueService(VenueRepository venueRepository) {
+    public VenueService(VenueRepository venueRepository, VenueInfrastructureService venueInfrastructureService) {
         this.venueRepository = venueRepository;
+        this.venueInfrastructureService = venueInfrastructureService;
     }
 
     @Transactional(readOnly = true)
@@ -31,7 +33,9 @@ public class VenueService {
         venue.setName(request.getName().trim());
         venue.setCity(request.getCity().trim());
         venue.setAddress(request.getAddress().trim());
-        return mapVenue(venueRepository.save(venue));
+        Venue savedVenue = venueRepository.save(venue);
+        venueInfrastructureService.ensureBookableScreen(savedVenue);
+        return mapVenue(savedVenue);
     }
 
     public VenueSummaryResponse mapVenue(Venue venue) {

@@ -1,9 +1,12 @@
 package com.showbooking.backend.controller;
 
 import com.showbooking.backend.dto.show.CreateShowRequest;
+import com.showbooking.backend.dto.show.CreateShowTimingRequest;
 import com.showbooking.backend.dto.show.ShowResponse;
 import com.showbooking.backend.security.SecurityUser;
 import com.showbooking.backend.service.ShowService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,9 +19,11 @@ import java.util.List;
 public class ShowController {
 
     private final ShowService showService;
+    private final ObjectMapper objectMapper;
 
-    public ShowController(ShowService showService) {
+    public ShowController(ShowService showService, ObjectMapper objectMapper) {
         this.showService = showService;
+        this.objectMapper = objectMapper;
     }
 
     @GetMapping
@@ -48,6 +53,7 @@ public class ShowController {
             @RequestParam("language") String language,
             @RequestParam("genre") String genre,
             @RequestParam("venueIds") List<Long> venueIds,
+            @RequestParam("timings") String timings,
             @RequestParam(value = "posterUrl", required = false) String posterUrl,
             @RequestParam(value = "image", required = false) org.springframework.web.multipart.MultipartFile image) {
         
@@ -59,6 +65,7 @@ public class ShowController {
         request.setGenre(genre);
         request.setPosterUrl(posterUrl);
         request.setVenueIds(venueIds);
+        request.setTimings(parseTimings(timings));
         
         return showService.createShow(securityUser.getId(), request, image);
     }
@@ -74,6 +81,7 @@ public class ShowController {
             @RequestParam("language") String language,
             @RequestParam("genre") String genre,
             @RequestParam("venueIds") List<Long> venueIds,
+            @RequestParam("timings") String timings,
             @RequestParam(value = "posterUrl", required = false) String posterUrl,
             @RequestParam(value = "image", required = false) org.springframework.web.multipart.MultipartFile image) {
         
@@ -85,6 +93,7 @@ public class ShowController {
         request.setGenre(genre);
         request.setPosterUrl(posterUrl);
         request.setVenueIds(venueIds);
+        request.setTimings(parseTimings(timings));
         
         return showService.updateShow(securityUser.getId(), id, request, image);
     }
@@ -94,5 +103,13 @@ public class ShowController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteShow(@AuthenticationPrincipal SecurityUser securityUser, @PathVariable("id") Long id) {
         showService.deleteShow(securityUser.getId(), id);
+    }
+
+    private List<CreateShowTimingRequest> parseTimings(String timings) {
+        try {
+            return objectMapper.readValue(timings, new TypeReference<List<CreateShowTimingRequest>>() {});
+        } catch (Exception exception) {
+            throw new IllegalArgumentException("Invalid show timings payload");
+        }
     }
 }

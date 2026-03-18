@@ -22,6 +22,11 @@ export type ShowFormPayload = {
   genre: string;
   posterUrl: string;
   venueIds: number[];
+  timings: {
+    venueId: number;
+    startTime: string;
+    price: number;
+  }[];
 };
 
 function mapShow(response: BackendShowResponse): ShowSummary {
@@ -62,6 +67,7 @@ export async function createShow(show: ShowFormPayload, imageFile?: File): Promi
     formData.append("language", show.language);
     formData.append("genre", show.genre);
     show.venueIds.forEach((venueId) => formData.append("venueIds", venueId.toString()));
+    formData.append("timings", JSON.stringify(show.timings));
     formData.append("image", imageFile);
     
     const response = await api.post<BackendShowResponse>("/shows", formData);
@@ -76,6 +82,7 @@ export async function createShow(show: ShowFormPayload, imageFile?: File): Promi
   formData.append("language", show.language);
   formData.append("genre", show.genre);
   show.venueIds.forEach((venueId) => formData.append("venueIds", venueId.toString()));
+  formData.append("timings", JSON.stringify(show.timings));
   if (show.posterUrl) formData.append("posterUrl", show.posterUrl);
   
   const response = await api.post<BackendShowResponse>("/shows", formData);
@@ -90,6 +97,7 @@ export async function updateShow(showId: number, show: ShowFormPayload, imageFil
   formData.append("language", show.language);
   formData.append("genre", show.genre);
   show.venueIds.forEach((venueId) => formData.append("venueIds", venueId.toString()));
+  formData.append("timings", JSON.stringify(show.timings));
   
   if (imageFile) {
     formData.append("image", imageFile);

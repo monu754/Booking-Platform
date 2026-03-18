@@ -1,16 +1,19 @@
 package com.showbooking.backend.service;
 
 import com.showbooking.backend.dto.show.CreateShowRequest;
+import com.showbooking.backend.dto.show.CreateShowTimingRequest;
 import com.showbooking.backend.dto.show.ShowResponse;
 import com.showbooking.backend.dto.show.ShowTimingResponse;
 import com.showbooking.backend.dto.venue.VenueSummaryResponse;
 import com.showbooking.backend.entity.AppRole;
+import com.showbooking.backend.entity.Screen;
 import com.showbooking.backend.entity.Show;
 import com.showbooking.backend.entity.ShowTiming;
 import com.showbooking.backend.entity.User;
 import com.showbooking.backend.entity.Venue;
 import com.showbooking.backend.repository.ShowRepository;
 import com.showbooking.backend.repository.ShowTimingRepository;
+import com.showbooking.backend.repository.BookingSeatRepository;
 import com.showbooking.backend.repository.UserRepository;
 import com.showbooking.backend.repository.VenueRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -18,7 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,20 +34,26 @@ public class ShowService {
     private final ShowTimingRepository showTimingRepository;
     private final VenueRepository venueRepository;
     private final UserRepository userRepository;
+    private final BookingSeatRepository bookingSeatRepository;
     private final FileStorageService fileStorageService;
+    private final VenueInfrastructureService venueInfrastructureService;
 
     public ShowService(
         ShowRepository showRepository,
         ShowTimingRepository showTimingRepository,
         VenueRepository venueRepository,
         UserRepository userRepository,
-        FileStorageService fileStorageService
+        BookingSeatRepository bookingSeatRepository,
+        FileStorageService fileStorageService,
+        VenueInfrastructureService venueInfrastructureService
     ) {
         this.showRepository = showRepository;
         this.showTimingRepository = showTimingRepository;
         this.venueRepository = venueRepository;
         this.userRepository = userRepository;
+        this.bookingSeatRepository = bookingSeatRepository;
         this.fileStorageService = fileStorageService;
+        this.venueInfrastructureService = venueInfrastructureService;
     }
 
     @Transactional(readOnly = true)
@@ -106,6 +117,16 @@ public class ShowService {
             .orElseThrow(() -> new EntityNotFoundException("Show not found"));
 
         ensureCanManageShow(user, show);
+
+        if (bookingSeatRepository.existsByShowTiming_Show_Id(show.getId())) {
+            throw new IllegalArgumentException("Cannot delete a show that has active bookings.");
+        }
+
+        List<ShowTiming> existingTimings = showTimingRepository.findByShow_Id(show.getId());
+        if (!existingTimings.isEmpty()) {
+            showTimingRepository.deleteAll(existingTimings);
+        }
+
         showRepository.delete(show);
     }
 
@@ -122,6 +143,9 @@ public class ShowService {
         } else {
             show.setPosterUrl(request.getPosterUrl());
         }
+
+        show = showRepository.save(show);
+        replaceShowTimings(show, request.getTimings(), venues);
     }
 
     private Set<Venue> resolveAndValidateVenues(User user, List<Long> venueIds) {
@@ -143,6 +167,82 @@ public class ShowService {
         }
 
         return selectedVenues;
+    }
+
+    private void replaceShowTimings(Show show, List<CreateShowTimingRequest> timingRequests, Set<Venue> selectedVenues) {
+        if (timingRequests == null || timingRequests.isEmpty()) {
+            throw new IllegalArgumentException("Add at least one show schedule.");
+        }
+
+        Map<Long, Venue> venueLookup = selectedVenues.stream()
+            .collect(Collectors.toMap(Venue::getId, venue -> venue));
+
+        List<ShowTiming> existingTimings = showTimingRepository.findByShow_Id(show.getId());
+        if (hasSameSchedules(existingTimings, timingRequests)) {
+            return;
+        }
+        if (!existingTimings.isEmpty() && bookingSeatRepository.existsByShowTiming_Show_Id(show.getId())) {
+            throw new IllegalArgumentException("Booked shows cannot have their schedules changed.");
+        }
+        if (!existingTimings.isEmpty()) {
+            showTimingRepository.deleteAll(existingTimings);
+            showTimingRepository.flush();
+        }
+
+        List<ShowTiming> timings = timingRequests.stream()
+            .map(timingRequest -> buildTiming(show, timingRequest, venueLookup))
+            .toList();
+        showTimingRepository.saveAll(timings);
+    }
+
+    private ShowTiming buildTiming(Show show, CreateShowTimingRequest request, Map<Long, Venue> venueLookup) {
+        Venue venue = venueLookup.get(request.getVenueId());
+        if (venue == null) {
+            throw new IllegalArgumentException("Schedules must belong to one of the selected venues.");
+        }
+        if (request.getStartTime() == null || !request.getStartTime().isAfter(java.time.LocalDateTime.now())) {
+            throw new IllegalArgumentException("Show schedules must be in the future.");
+        }
+        if (request.getPrice() == null || request.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Show schedule price must be greater than zero.");
+        }
+
+        Screen screen = venueInfrastructureService.ensureBookableScreen(venue);
+
+        ShowTiming timing = new ShowTiming();
+        timing.setShow(show);
+        timing.setScreen(screen);
+        timing.setStartTime(request.getStartTime());
+        timing.setPrice(request.getPrice());
+        return timing;
+    }
+
+    private boolean hasSameSchedules(List<ShowTiming> existingTimings, List<CreateShowTimingRequest> requestedTimings) {
+        if (existingTimings.size() != requestedTimings.size()) {
+            return false;
+        }
+
+        Set<String> existingKeys = existingTimings.stream()
+            .map(timing -> scheduleKey(
+                timing.getScreen().getVenue().getId(),
+                timing.getStartTime().withSecond(0).withNano(0).toString(),
+                timing.getPrice()
+            ))
+            .collect(Collectors.toSet());
+
+        Set<String> requestedKeys = requestedTimings.stream()
+            .map(timing -> scheduleKey(
+                timing.getVenueId(),
+                timing.getStartTime().withSecond(0).withNano(0).toString(),
+                timing.getPrice()
+            ))
+            .collect(Collectors.toSet());
+
+        return existingKeys.equals(requestedKeys);
+    }
+
+    private String scheduleKey(Long venueId, String startTime, BigDecimal price) {
+        return venueId + "|" + startTime + "|" + price.stripTrailingZeros().toPlainString();
     }
 
     private void ensureCanManageShow(User user, Show show) {
@@ -198,6 +298,7 @@ public class ShowService {
         return new ShowTimingResponse(
             timing.getId(),
             timing.getScreen().getName(),
+            timing.getScreen().getVenue().getId(),
             timing.getScreen().getVenue().getName(),
             timing.getScreen().getVenue().getCity(),
             timing.getStartTime(),
