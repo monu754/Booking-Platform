@@ -588,6 +588,4 @@ For persistent setup:
 3. run backend with `mysql` profile
 4. use MySQL-backed data
 
-## License
 
-No license file is currently included in this repository. Add one before public distribution if needed.
