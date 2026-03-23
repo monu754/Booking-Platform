@@ -77,3 +77,29 @@ export type PaymentSimulationResponse = {
   bookingStatus: "CONFIRMED" | "FAILED";
   paymentMethod: string;
 };
+
+export type DashboardRecentBooking = {
+  bookingId: number;
+  customerName: string;
+  showTitle: string;
+  bookingStatus: string;
+  paymentStatus: string;
+  totalAmount: number;
+  createdAt: string;
+};
+
+export type DashboardSummary = {
+  scope: "ADMIN" | "ORGANIZER";
+  registeredUsers: number;
+  activeOrganizers: number;
+  trackedCustomers: number;
+  venueCount: number;
+  showCount: number;
+  upcomingScheduleCount: number;
+  totalBookings: number;
+  confirmedBookings: number;
+  pendingBookings: number;
+  soldSeatCount: number;
+  totalRevenue: number;
+  recentBookings: DashboardRecentBooking[];
+};

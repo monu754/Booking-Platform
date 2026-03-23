@@ -59,6 +59,7 @@ export async function getManagedShows(): Promise<ShowSummary[]> {
 }
 
 export async function createShow(show: ShowFormPayload, imageFile?: File): Promise<ShowSummary> {
+  const posterUrl = show.posterUrl.trim();
   if (imageFile) {
     const formData = new FormData();
     formData.append("title", show.title);
@@ -83,13 +84,14 @@ export async function createShow(show: ShowFormPayload, imageFile?: File): Promi
   formData.append("genre", show.genre);
   show.venueIds.forEach((venueId) => formData.append("venueIds", venueId.toString()));
   formData.append("timings", JSON.stringify(show.timings));
-  if (show.posterUrl) formData.append("posterUrl", show.posterUrl);
+  if (posterUrl) formData.append("posterUrl", posterUrl);
   
   const response = await api.post<BackendShowResponse>("/shows", formData);
   return mapShow(response.data);
 }
 
 export async function updateShow(showId: number, show: ShowFormPayload, imageFile?: File): Promise<ShowSummary> {
+  const posterUrl = show.posterUrl.trim();
   const formData = new FormData();
   formData.append("title", show.title);
   formData.append("description", show.description);
@@ -101,8 +103,8 @@ export async function updateShow(showId: number, show: ShowFormPayload, imageFil
   
   if (imageFile) {
     formData.append("image", imageFile);
-  } else if (show.posterUrl) {
-    formData.append("posterUrl", show.posterUrl);
+  } else if (posterUrl) {
+    formData.append("posterUrl", posterUrl);
   }
   
   const response = await api.put<BackendShowResponse>(`/shows/${showId}`, formData);

@@ -5,6 +5,7 @@ import { formatCurrency } from "@show-booking/utils";
 import { getSeats } from "../services/seatService";
 import { getShowById } from "../services/showService";
 import { useBookingStore } from "../store/bookingStore";
+import { useSessionStore } from "../store/sessionStore";
 
 export function SeatSelectionPage() {
   const navigate = useNavigate();
@@ -12,11 +13,13 @@ export function SeatSelectionPage() {
   const [searchParams] = useSearchParams();
   const timingId = Number(searchParams.get("timingId"));
   const setDraft = useBookingStore((state) => state.setDraft);
+  const roles = useSessionStore((state) => state.roles);
   const [show, setShow] = useState<ShowSummary | null>(null);
   const [seats, setSeats] = useState<SeatMapItem[]>([]);
   const [selectedSeatIds, setSelectedSeatIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const canBookShows = !roles.includes("ADMIN") && !roles.includes("ORGANIZER");
 
   useEffect(() => {
     if (!timingId || !showId) {
@@ -61,7 +64,7 @@ export function SeatSelectionPage() {
   }
 
   function continueToCheckout() {
-    if (!show || !selectedTiming || selectedSeats.length === 0) {
+    if (!show || !selectedTiming || selectedSeats.length === 0 || !canBookShows) {
       return;
     }
 
@@ -173,6 +176,11 @@ export function SeatSelectionPage() {
           <aside className="space-y-6">
              <div className="sticky top-24 rounded-[40px] border border-surface-200 bg-white p-8 shadow-premium">
                 <h3 className="font-display text-2xl font-black text-premium">Your Selection</h3>
+                {!canBookShows ? (
+                  <div className="mt-8 rounded-[28px] border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-medium text-amber-800">
+                    Admin and organizer accounts can review seat layouts, but only customer accounts can continue to checkout.
+                  </div>
+                ) : null}
                 {selectedSeats.length > 0 ? (
                   <div className="mt-8 space-y-6">
                     <div className="space-y-3">
@@ -196,6 +204,7 @@ export function SeatSelectionPage() {
                     <button
                       type="button"
                       onClick={continueToCheckout}
+                      disabled={!canBookShows}
                       className="btn-premium w-full mt-4"
                     >
                       Authenticate Booking
@@ -213,4 +222,3 @@ export function SeatSelectionPage() {
     </div>
   );
 }
-

@@ -23,7 +23,7 @@ public class BookingController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.CREATED)
     public BookingResponse createBooking(
         @AuthenticationPrincipal SecurityUser securityUser,
@@ -33,7 +33,7 @@ public class BookingController {
     }
 
     @GetMapping("/user")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("isAuthenticated()")
     public List<BookingResponse> getUserBookings(@AuthenticationPrincipal SecurityUser securityUser) {
         return bookingService.getUserBookings(securityUser.getId());
     }

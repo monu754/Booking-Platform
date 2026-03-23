@@ -1,3 +1,4 @@
+import { AxiosError } from "axios";
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { formatCurrency } from "@show-booking/utils";
@@ -62,8 +63,19 @@ export function CheckoutPage() {
         paymentStatus: payment.paymentStatus,
         bookingStatus: payment.bookingStatus,
       });
-    } catch {
-      setError("Unable to complete checkout. Please try again.");
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const apiError = error.response?.data;
+        if (typeof apiError?.error === "string" && apiError.error.trim().length > 0) {
+          setError(apiError.error);
+        } else if (error.response?.status === 403) {
+          setError("Your account is not allowed to complete checkout.");
+        } else {
+          setError("Unable to complete checkout. Please try again.");
+        }
+      } else {
+        setError("Unable to complete checkout. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -143,15 +155,15 @@ export function CheckoutPage() {
                              {receipt.paymentStatus}
                           </div>
                        </div>
-                       <div className="border-t border-brand-100 pt-6 flex justify-between items-center">
-                          <p className="text-sm font-medium text-slate-500">The credentials for this show have been securely synchronized with your profile.</p>
+                       <div className="flex flex-col gap-4 border-t border-brand-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                          <p className="max-w-xl text-sm font-medium text-slate-500">The credentials for this show have been securely synchronized with your profile.</p>
                           <button
                             type="button"
                             onClick={() => {
                               clearDraft();
                               navigate("/bookings");
                             }}
-                            className="btn-premium whitespace-nowrap"
+                            className="btn-premium inline-flex items-center justify-center whitespace-nowrap text-center"
                           >
                             Explore Reservations
                           </button>

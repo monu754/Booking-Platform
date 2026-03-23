@@ -32,9 +32,14 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedRoute />,
         children: [
+          { path: "profile", element: <ProfilePage /> },
+        ],
+      },
+      {
+        element: <ProtectedRoute roles={["USER"]} />,
+        children: [
           { path: "checkout", element: <CheckoutPage /> },
           { path: "bookings", element: <MyBookingsPage /> },
-          { path: "profile", element: <ProfilePage /> },
         ],
       },
     ],

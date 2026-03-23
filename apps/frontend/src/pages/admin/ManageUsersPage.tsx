@@ -98,12 +98,12 @@ export function ManageUsersPage() {
 
   return (
     <div className="space-y-12">
-      <div className="flex items-end justify-between gap-8">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.4em] text-brand-500">Access Governance</p>
-          <h1 className="font-display text-5xl font-black text-white">Identity Management</h1>
+          <h1 className="font-display text-4xl font-black text-white sm:text-5xl">Identity Management</h1>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="btn-premium !px-8 !py-4 text-sm group">
+        <button onClick={() => setIsModalOpen(true)} className="btn-premium w-full !px-8 !py-4 text-sm group sm:w-auto">
           <svg className="mr-2 inline-block h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
           </svg>
@@ -168,7 +168,7 @@ export function ManageUsersPage() {
             </div>
           ) : null}
 
-          <div className="flex justify-end gap-4 pt-6">
+          <div className="flex flex-col-reverse gap-4 pt-6 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={() => {
@@ -282,7 +282,7 @@ export function ManageUsersPage() {
             </div>
           ) : null}
 
-          <div className="flex justify-end gap-4 border-t border-white/5 pt-6">
+          <div className="flex flex-col-reverse gap-4 border-t border-white/5 pt-6 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={() => {
@@ -312,12 +312,12 @@ export function ManageUsersPage() {
       </Modal>
 
       <div className="overflow-hidden rounded-[40px] border border-white/5 bg-white/5 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-white/5 bg-white/[0.02] p-8">
-          <div className="flex gap-4">
+        <div className="flex flex-col gap-4 border-b border-white/5 bg-white/[0.02] p-5 sm:p-8 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row">
             <input
               type="text"
               placeholder="Search by identity or email..."
-              className="w-80 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white outline-none transition-all placeholder:text-slate-600 focus:border-brand-500"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white outline-none transition-all placeholder:text-slate-600 focus:border-brand-500 lg:w-80"
             />
             <select className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white outline-none transition-all focus:border-brand-500">
               <option className="bg-slate-900">All Permissions</option>

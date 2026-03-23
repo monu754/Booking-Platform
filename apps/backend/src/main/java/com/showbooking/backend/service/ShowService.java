@@ -9,8 +9,10 @@ import com.showbooking.backend.entity.AppRole;
 import com.showbooking.backend.entity.Screen;
 import com.showbooking.backend.entity.Show;
 import com.showbooking.backend.entity.ShowTiming;
+import com.showbooking.backend.entity.Booking;
 import com.showbooking.backend.entity.User;
 import com.showbooking.backend.entity.Venue;
+import com.showbooking.backend.repository.BookingRepository;
 import com.showbooking.backend.repository.ShowRepository;
 import com.showbooking.backend.repository.ShowTimingRepository;
 import com.showbooking.backend.repository.BookingSeatRepository;
@@ -34,6 +36,7 @@ public class ShowService {
     private final ShowTimingRepository showTimingRepository;
     private final VenueRepository venueRepository;
     private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
     private final BookingSeatRepository bookingSeatRepository;
     private final FileStorageService fileStorageService;
     private final VenueInfrastructureService venueInfrastructureService;
@@ -43,6 +46,7 @@ public class ShowService {
         ShowTimingRepository showTimingRepository,
         VenueRepository venueRepository,
         UserRepository userRepository,
+        BookingRepository bookingRepository,
         BookingSeatRepository bookingSeatRepository,
         FileStorageService fileStorageService,
         VenueInfrastructureService venueInfrastructureService
@@ -51,6 +55,7 @@ public class ShowService {
         this.showTimingRepository = showTimingRepository;
         this.venueRepository = venueRepository;
         this.userRepository = userRepository;
+        this.bookingRepository = bookingRepository;
         this.bookingSeatRepository = bookingSeatRepository;
         this.fileStorageService = fileStorageService;
         this.venueInfrastructureService = venueInfrastructureService;
@@ -119,7 +124,10 @@ public class ShowService {
         ensureCanManageShow(user, show);
 
         if (bookingSeatRepository.existsByShowTiming_Show_Id(show.getId())) {
-            throw new IllegalArgumentException("Cannot delete a show that has active bookings.");
+            if (!hasRole(user, AppRole.ADMIN)) {
+                throw new IllegalArgumentException("Booked shows can only be deleted by an admin.");
+            }
+            deleteShowBookings(show.getId());
         }
 
         List<ShowTiming> existingTimings = showTimingRepository.findByShow_Id(show.getId());
@@ -141,7 +149,7 @@ public class ShowService {
         if (image != null && !image.isEmpty()) {
             show.setPosterUrl(fileStorageService.save(image));
         } else {
-            show.setPosterUrl(request.getPosterUrl());
+            show.setPosterUrl(normalizePosterUrl(request.getPosterUrl()));
         }
 
         show = showRepository.save(show);
@@ -243,6 +251,35 @@ public class ShowService {
 
     private String scheduleKey(Long venueId, String startTime, BigDecimal price) {
         return venueId + "|" + startTime + "|" + price.stripTrailingZeros().toPlainString();
+    }
+
+    private void deleteShowBookings(Long showId) {
+        List<Booking> relatedBookings = bookingRepository.findDistinctByShowId(showId);
+        if (!relatedBookings.isEmpty()) {
+            bookingRepository.deleteAll(relatedBookings);
+            bookingRepository.flush();
+        }
+    }
+
+    private String normalizePosterUrl(String posterUrl) {
+        if (posterUrl == null) {
+            return null;
+        }
+
+        String normalized = posterUrl.trim();
+        if (normalized.isEmpty()) {
+            return null;
+        }
+
+        if (normalized.startsWith("http://") || normalized.startsWith("https://") || normalized.startsWith("data:") || normalized.startsWith("/")) {
+            return normalized;
+        }
+
+        if (normalized.startsWith("www.")) {
+            return "https://" + normalized;
+        }
+
+        return normalized;
     }
 
     private void ensureCanManageShow(User user, Show show) {

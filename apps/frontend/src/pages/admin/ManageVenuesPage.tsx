@@ -49,12 +49,12 @@ export function ManageVenuesPage() {
 
   return (
     <div className="space-y-12">
-      <div className="flex items-end justify-between gap-8">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.4em] text-brand-500">Venue Directory</p>
-          <h1 className="font-display text-5xl font-black text-white">Manage Venues</h1>
+          <h1 className="font-display text-4xl font-black text-white sm:text-5xl">Manage Venues</h1>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className="btn-premium !px-8 !py-4 text-sm group">
+        <button onClick={() => setIsModalOpen(true)} className="btn-premium w-full !px-8 !py-4 text-sm group sm:w-auto">
           <svg className="mr-2 inline-block h-4 w-4 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
@@ -106,7 +106,7 @@ export function ManageVenuesPage() {
             </div>
           ) : null}
 
-          <div className="flex justify-end gap-4 pt-6">
+          <div className="flex flex-col-reverse gap-4 pt-6 sm:flex-row sm:justify-end">
             <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-2xl border border-white/10 px-8 py-4 font-bold text-slate-500 transition-all hover:bg-white/5">
               Cancel
             </button>

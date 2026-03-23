@@ -5,12 +5,16 @@ import { formatCurrency } from "@show-booking/utils";
 import { PosterArtwork } from "../components/PosterArtwork";
 import { SectionHeader } from "../components/SectionHeader";
 import { getShowById } from "../services/showService";
+import { useSessionStore } from "../store/sessionStore";
 
 export function ShowDetailsPage() {
   const { showId } = useParams();
+  const roles = useSessionStore((state) => state.roles);
   const [show, setShow] = useState<ShowSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const canBookShows = !roles.includes("ADMIN") && !roles.includes("ORGANIZER");
+  const now = Date.now();
 
   useEffect(() => {
     if (!showId) {
@@ -93,41 +97,66 @@ export function ShowDetailsPage() {
           <div className="space-y-8">
             <div className="rounded-[40px] border border-surface-200 bg-white p-10 shadow-premium">
               <h3 className="font-display text-3xl font-black text-premium">Select Perspective</h3>
-              <p className="mt-2 text-slate-500">Pick a timing that fits your schedule.</p>
+              <p className="mt-2 text-slate-500">
+                {canBookShows ? "Pick a timing that fits your schedule." : "Admin and organizer accounts can manage shows, but they cannot book them."}
+              </p>
 
               <div className="mt-10 space-y-4">
-                {show.timings?.map((timing) => (
-                  <div
-                    key={timing.id}
-                    className="group relative flex flex-wrap items-center justify-between gap-6 rounded-3xl border border-surface-200 bg-surface-50 p-6 transition-all duration-300 hover:border-brand-500 hover:bg-white hover:shadow-lg"
-                  >
-                    <div className="flex items-center gap-6">
-                      <div className="flex h-16 w-16 flex-col items-center justify-center rounded-2xl border border-surface-200 bg-white shadow-sm transition-colors group-hover:border-brand-100 group-hover:bg-brand-50">
-                        <p className="text-[10px] font-bold uppercase text-slate-400 group-hover:text-brand-600">
-                          {new Date(timing.startTime).toLocaleString("default", { month: "short" })}
-                        </p>
-                        <p className="text-xl font-bold text-premium">{new Date(timing.startTime).getDate()}</p>
+                {show.timings?.map((timing) => {
+                  const isPastTiming = new Date(timing.startTime).getTime() <= now;
+
+                  return (
+                    <div
+                      key={timing.id}
+                      className={`group relative flex flex-wrap items-center justify-between gap-6 rounded-3xl border p-6 transition-all duration-300 ${
+                        isPastTiming
+                          ? "border-slate-200 bg-slate-50/70"
+                          : "border-surface-200 bg-surface-50 hover:border-brand-500 hover:bg-white hover:shadow-lg"
+                      }`}
+                    >
+                      <div className="flex items-center gap-6">
+                        <div className={`flex h-16 w-16 flex-col items-center justify-center rounded-2xl border shadow-sm transition-colors ${
+                          isPastTiming
+                            ? "border-slate-200 bg-slate-100"
+                            : "border-surface-200 bg-white group-hover:border-brand-100 group-hover:bg-brand-50"
+                        }`}>
+                          <p className={`text-[10px] font-bold uppercase ${isPastTiming ? "text-slate-400" : "text-slate-400 group-hover:text-brand-600"}`}>
+                            {new Date(timing.startTime).toLocaleString("default", { month: "short" })}
+                          </p>
+                          <p className="text-xl font-bold text-premium">{new Date(timing.startTime).getDate()}</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-premium">
+                            {new Date(timing.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                          <p className="text-sm font-medium text-slate-400">
+                            {timing.venueName} | {timing.screenName}
+                          </p>
+                          {isPastTiming ? (
+                            <p className="mt-2 text-xs font-bold uppercase tracking-widest text-red-500">
+                              Past show
+                            </p>
+                          ) : null}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-lg font-bold text-premium">
-                          {new Date(timing.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </p>
-                        <p className="text-sm font-medium text-slate-400">
-                          {timing.venueName} | {timing.screenName}
-                        </p>
+                      <div className="flex items-center gap-6">
+                        <p className="text-xl font-black text-brand-600">{formatCurrency(timing.price)}</p>
+                        {canBookShows && !isPastTiming ? (
+                          <Link
+                            to={`/shows/${show.id}/seats?timingId=${timing.id}`}
+                            className="btn-premium !px-6 !py-3"
+                          >
+                            Reserve Spot
+                          </Link>
+                        ) : (
+                          <span className="rounded-full border border-surface-200 bg-surface-50 px-4 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+                            {isPastTiming ? "Unavailable" : "Booking disabled"}
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                      <p className="text-xl font-black text-brand-600">{formatCurrency(timing.price)}</p>
-                      <Link
-                        to={`/shows/${show.id}/seats?timingId=${timing.id}`}
-                        className="btn-premium !px-6 !py-3"
-                      >
-                        Reserve Spot
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {show.timings?.length === 0 && (
                   <div className="rounded-3xl border-2 border-dashed border-surface-200 py-12 text-center">

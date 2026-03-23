@@ -6,6 +6,7 @@ import com.showbooking.backend.entity.Booking;
 import com.showbooking.backend.entity.BookingSeat;
 import com.showbooking.backend.entity.BookingStatus;
 import com.showbooking.backend.entity.Payment;
+import com.showbooking.backend.entity.AppRole;
 import com.showbooking.backend.entity.Seat;
 import com.showbooking.backend.entity.ShowTiming;
 import com.showbooking.backend.entity.User;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -53,8 +55,16 @@ public class BookingService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
 
+        if (hasRestrictedBookingRole(user)) {
+            throw new IllegalStateException("Admin and organizer accounts cannot book shows.");
+        }
+
         ShowTiming showTiming = showTimingRepository.findById(request.getShowTimingId())
             .orElseThrow(() -> new EntityNotFoundException("Show timing not found: " + request.getShowTimingId()));
+
+        if (!showTiming.getStartTime().isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Past shows cannot be booked.");
+        }
 
         for (Long seatId : request.getSeatIds()) {
             if (bookingSeatRepository.existsByShowTiming_IdAndSeat_Id(showTiming.getId(), seatId)) {
@@ -125,5 +135,10 @@ public class BookingService {
             payment != null ? payment.getTransactionId() : null,
             payment != null ? payment.getPaymentMethod() : null
         );
+    }
+
+    private boolean hasRestrictedBookingRole(User user) {
+        return user.getRoles().stream()
+            .anyMatch(role -> role.getName() == AppRole.ADMIN || role.getName() == AppRole.ORGANIZER);
     }
 }

@@ -43,7 +43,7 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**", "/ws/**", "/error", "/h2-console/**", "/uploads/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/shows/**", "/api/seats/**", "/uploads/**").permitAll()
-                .requestMatchers("/api/bookings/**", "/api/payments/**").hasRole("USER")
+                .requestMatchers("/api/bookings/**", "/api/payments/**").authenticated()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )

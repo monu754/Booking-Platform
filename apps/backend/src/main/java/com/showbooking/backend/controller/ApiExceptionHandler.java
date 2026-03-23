@@ -3,6 +3,7 @@ package com.showbooking.backend.controller;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -38,6 +39,11 @@ public class ApiExceptionHandler {
         body.put("error", "Validation failed");
         body.put("details", errors);
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrity(DataIntegrityViolationException exception) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Unable to save this show. Check that the poster URL and other field values are valid.");
     }
 
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String message) {

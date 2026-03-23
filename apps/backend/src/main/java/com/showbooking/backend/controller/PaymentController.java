@@ -23,7 +23,7 @@ public class PaymentController {
     }
 
     @PostMapping("/simulate")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("isAuthenticated()")
     public PaymentSimulationResponse simulatePayment(
         @AuthenticationPrincipal SecurityUser securityUser,
         @Valid @RequestBody PaymentSimulationRequest request

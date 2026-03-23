@@ -32,7 +32,7 @@ public class Show {
     @Column(nullable = false, length = 80)
     private String genre;
 
-    @Column(name = "poster_url")
+    @Column(name = "poster_url", columnDefinition = "TEXT")
     private String posterUrl;
 
     @ManyToMany(fetch = FetchType.EAGER)

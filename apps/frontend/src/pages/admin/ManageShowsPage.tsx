@@ -6,6 +6,7 @@ import { getVenues } from "../../services/venueService";
 import { Modal } from "../../components/Modal";
 import { PosterArtwork } from "../../components/PosterArtwork";
 import { useSessionStore } from "../../store/sessionStore";
+import { resolveMediaUrl } from "../../utils/media";
 
 const defaultShowForm: ShowFormPayload = {
   title: "",
@@ -71,7 +72,11 @@ export function ManageShowsPage() {
   }
 
   function resetForm() {
-    setShowForm(defaultShowForm);
+    setShowForm({
+      ...defaultShowForm,
+      venueIds: [],
+      timings: defaultShowForm.timings.map((timing) => ({ ...timing })),
+    });
     setEditingShow(null);
     setImageSource("url");
     setSelectedFile(null);
@@ -91,13 +96,14 @@ export function ManageShowsPage() {
     }));
 
     setEditingShow(show);
+    const posterUrl = show.posterUrl ?? "";
     setShowForm({
       title: show.title,
       description: show.description,
       duration: show.durationMinutes,
       language: show.language,
       genre: show.genre,
-      posterUrl: show.posterUrl,
+      posterUrl,
       venueIds: show.venues.map((venue) => venue.id),
       timings: existingTimings.length > 0
         ? existingTimings
@@ -109,7 +115,7 @@ export function ManageShowsPage() {
             },
           ],
     });
-    setImageSource("url");
+    setImageSource(posterUrl.startsWith("/uploads/") ? "upload" : "url");
     setSelectedFile(null);
     setFormError(null);
     setIsModalOpen(true);
@@ -169,6 +175,7 @@ export function ManageShowsPage() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+    const normalizedPosterUrl = showForm.posterUrl.trim();
 
     if (showForm.venueIds.length === 0) {
       setFormError("Select at least one venue for this show.");
@@ -181,10 +188,14 @@ export function ManageShowsPage() {
     }
 
     try {
+      const payload = {
+        ...showForm,
+        posterUrl: normalizedPosterUrl,
+      };
       if (editingShow) {
-        await updateShow(editingShow.id, showForm, imageSource === "upload" ? (selectedFile ?? undefined) : undefined);
+        await updateShow(editingShow.id, payload, imageSource === "upload" ? (selectedFile ?? undefined) : undefined);
       } else {
-        await createShow(showForm, imageSource === "upload" ? (selectedFile ?? undefined) : undefined);
+        await createShow(payload, imageSource === "upload" ? (selectedFile ?? undefined) : undefined);
       }
 
       setIsModalOpen(false);
@@ -208,16 +219,16 @@ export function ManageShowsPage() {
 
   return (
     <div className="space-y-12">
-      <div className="flex items-end justify-between gap-8">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.4em] text-brand-500">
             {isOrganizerOnly ? "Venue Control" : "Inventory Control"}
           </p>
-          <h1 className="font-display text-5xl font-black text-white">
+          <h1 className="font-display text-4xl font-black text-white sm:text-5xl">
             {isOrganizerOnly ? "Organizer Shows" : "Show Management"}
           </h1>
         </div>
-        <button onClick={openCreateModal} className="btn-premium !px-8 !py-4 text-sm group">
+        <button onClick={openCreateModal} className="btn-premium w-full !px-8 !py-4 text-sm group sm:w-auto">
           <svg className="mr-2 inline-block h-4 w-4 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
@@ -349,7 +360,7 @@ export function ManageShowsPage() {
             <div className="space-y-4">
               {showForm.timings.map((timing, index) => (
                 <div key={`${index}-${timing.startTime}`} className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-                  <div className="mb-4 flex items-center justify-between">
+                  <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-xs font-black uppercase tracking-widest text-slate-400">Schedule {index + 1}</p>
                     <button
                       type="button"
@@ -412,7 +423,10 @@ export function ManageShowsPage() {
               <div className="flex rounded-xl border border-white/10 bg-white/5 p-1">
                 <button
                   type="button"
-                  onClick={() => setImageSource("url")}
+                  onClick={() => {
+                    setImageSource("url");
+                    setSelectedFile(null);
+                  }}
                   className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
                     imageSource === "url" ? "rounded-lg bg-brand-500 text-white" : "text-slate-500 hover:text-slate-300"
                   }`}
@@ -432,13 +446,25 @@ export function ManageShowsPage() {
             </div>
 
             {imageSource === "url" ? (
-              <input
-                type="text"
-                value={showForm.posterUrl}
-                onChange={(event) => setShowForm({ ...showForm, posterUrl: event.target.value })}
-                placeholder="https://images.example.com/poster.jpg"
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-white outline-none transition-all focus:border-brand-500"
-              />
+              <div className="grid gap-4 md:grid-cols-[1.3fr_0.7fr]">
+                <input
+                  type="text"
+                  value={showForm.posterUrl}
+                  onChange={(event) => setShowForm({ ...showForm, posterUrl: event.target.value })}
+                  placeholder="https://images.example.com/poster.jpg"
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-white outline-none transition-all focus:border-brand-500"
+                />
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+                  <PosterArtwork
+                    title={showForm.title || "Poster Preview"}
+                    posterUrl={resolveMediaUrl(showForm.posterUrl.trim())}
+                    className="h-full min-h-[160px] w-full"
+                    imageClassName="h-full w-full object-cover"
+                    fallbackClassName="flex h-full min-h-[160px] w-full items-center justify-center bg-white/5 px-5"
+                    titleClassName="text-center font-display text-lg font-black uppercase tracking-[0.2em] text-white/20"
+                  />
+                </div>
+              </div>
             ) : (
               <div className="relative group">
                 <input
@@ -465,7 +491,7 @@ export function ManageShowsPage() {
             </div>
           ) : null}
 
-          <div className="flex justify-end gap-4 pt-6">
+          <div className="flex flex-col-reverse gap-4 pt-6 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={() => {

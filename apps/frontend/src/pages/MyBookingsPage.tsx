@@ -1,3 +1,4 @@
+import { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 import type { BookingSummary } from "@show-booking/types";
 import { getMyBookings } from "../services/bookingService";
@@ -12,7 +13,16 @@ export function MyBookingsPage() {
   useEffect(() => {
     void getMyBookings()
       .then(setBookings)
-      .catch(() => setError("Unable to load your bookings right now."))
+      .catch((error: unknown) => {
+        if (error instanceof AxiosError) {
+          const apiError = error.response?.data;
+          if (typeof apiError?.error === "string" && apiError.error.trim().length > 0) {
+            setError(apiError.error);
+            return;
+          }
+        }
+        setError("Unable to load your bookings right now.");
+      })
       .finally(() => setLoading(false));
   }, []);
 
