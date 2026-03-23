@@ -13,6 +13,7 @@ public record BookingResponse(
     Long showTimingId,
     String showTitle,
     List<Long> seatIds,
+    List<String> seatNumbers,
     String paymentStatus,
     String transactionId,
     String paymentMethod

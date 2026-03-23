@@ -46,6 +46,9 @@ public class User {
     )
     private Set<Venue> venues = new HashSet<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private Set<Booking> bookings = new HashSet<>();
+    
     @PrePersist
     public void prePersist() {
         if (createdAt == null) {

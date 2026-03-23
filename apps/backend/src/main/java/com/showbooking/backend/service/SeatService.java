@@ -35,7 +35,11 @@ public class SeatService {
         ShowTiming showTiming = showTimingRepository.findById(showTimingId)
             .orElseThrow(() -> new EntityNotFoundException("Show timing not found: " + showTimingId));
 
-        Set<Long> bookedSeatIds = bookingSeatRepository.findByShowTiming_Id(showTimingId).stream()
+        List<com.showbooking.backend.entity.BookingStatus> excludedStatuses = java.util.Arrays.asList(
+            com.showbooking.backend.entity.BookingStatus.FAILED,
+            com.showbooking.backend.entity.BookingStatus.CANCELLED
+        );
+        Set<Long> bookedSeatIds = bookingSeatRepository.findActiveBookingsByShowTiming(showTimingId, excludedStatuses).stream()
             .map(bookingSeat -> bookingSeat.getSeat().getId())
             .collect(java.util.stream.Collectors.toSet());
 

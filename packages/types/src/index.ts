@@ -53,6 +53,7 @@ export type BookingSummary = {
   showTimingId: number | null;
   showTitle: string | null;
   seatIds: number[];
+  seatNumbers?: string[];
   paymentStatus: string | null;
   transactionId: string | null;
   paymentMethod: string | null;

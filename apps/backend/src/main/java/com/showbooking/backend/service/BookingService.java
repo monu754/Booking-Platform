@@ -98,6 +98,9 @@ public class BookingService {
         List<Long> seatIds = bookingSeats.stream()
             .map(bookingSeat -> bookingSeat.getSeat().getId())
             .toList();
+        List<String> seatNumbers = bookingSeats.stream()
+            .map(bookingSeat -> bookingSeat.getSeat().getSeatRow() + bookingSeat.getSeat().getSeatNumber())
+            .toList();
         Long showTimingId = bookingSeats.stream()
             .findFirst()
             .map(bookingSeat -> bookingSeat.getShowTiming().getId())
@@ -117,6 +120,7 @@ public class BookingService {
             showTimingId,
             showTitle,
             seatIds,
+            seatNumbers,
             payment != null ? payment.getStatus().name() : null,
             payment != null ? payment.getTransactionId() : null,
             payment != null ? payment.getPaymentMethod() : null

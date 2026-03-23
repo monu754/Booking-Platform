@@ -4,6 +4,11 @@ Premium show booking platform built as a monorepo with a React frontend and a Sp
 
 StagePass supports public show discovery, seat selection, booking simulation, role-based admin and organizer management, venue management, profile editing, and Google sign-in.
 
+## Team Members
+- Manotosh Mandal
+- Devansh Singh 
+- Shivank Kashyap Jha
+
 ## What This Project Includes
 
 - Public show browsing and show detail pages

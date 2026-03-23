@@ -71,7 +71,7 @@ export function MyBookingsPage() {
                 <div className="mt-10 grid gap-10 md:grid-cols-3 pt-8 border-t border-surface-50">
                   <div className="space-y-1">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Allocated Seats</p>
-                    <p className="text-sm font-bold text-premium">{booking.seatIds.join(", ") || "Awaiting Finalization"}</p>
+                    <p className="text-sm font-bold text-premium">{(booking.seatNumbers ? booking.seatNumbers.join(", ") : booking.seatIds.join(", ")) || "Awaiting Finalization"}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Financial Status</p>

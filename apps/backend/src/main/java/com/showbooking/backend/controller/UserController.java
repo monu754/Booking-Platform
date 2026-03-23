@@ -36,7 +36,7 @@ public class UserController {
 
     @PutMapping("/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
-    public UserSummaryResponse updateRoles(@PathVariable Long id, @Valid @RequestBody UpdateUserRolesRequest request) {
+    public UserSummaryResponse updateRoles(@PathVariable("id") Long id, @Valid @RequestBody UpdateUserRolesRequest request) {
         return userService.updateUserRoles(id, request.getRoles(), request.getVenueIds());
     }
 }

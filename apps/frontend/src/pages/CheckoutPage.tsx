@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { formatCurrency } from "@show-booking/utils";
 import { createBooking } from "../services/bookingService";
@@ -33,6 +33,14 @@ export function CheckoutPage() {
 
   const activeDraft = draft;
 
+  useEffect(() => {
+    return () => {
+      if (receipt?.paymentStatus === "SUCCESS") {
+        clearDraft();
+      }
+    };
+  }, [receipt, clearDraft]);
+
   async function handlePayment() {
     setLoading(true);
     setError(null);
@@ -54,10 +62,6 @@ export function CheckoutPage() {
         paymentStatus: payment.paymentStatus,
         bookingStatus: payment.bookingStatus,
       });
-
-      if (payment.paymentStatus === "SUCCESS") {
-        clearDraft();
-      }
     } catch {
       setError("Unable to complete checkout. Please try again.");
     } finally {
@@ -143,7 +147,10 @@ export function CheckoutPage() {
                           <p className="text-sm font-medium text-slate-500">The credentials for this show have been securely synchronized with your profile.</p>
                           <button
                             type="button"
-                            onClick={() => navigate("/bookings")}
+                            onClick={() => {
+                              clearDraft();
+                              navigate("/bookings");
+                            }}
                             className="btn-premium whitespace-nowrap"
                           >
                             Explore Reservations
