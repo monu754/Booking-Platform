@@ -73,11 +73,6 @@ The application currently uses these roles internally:
 - `ORGANIZER`
 
 
-Important note:
-
-- `STAFF` still exists in the backend enum for compatibility, but it is not exposed in the current admin UI.
-- In the active UI flows, only `USER`, `ADMIN`, and `ORGANIZER` are managed.
-
 ## Current Role Behavior
 
 ### USER
