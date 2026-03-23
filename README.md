@@ -71,7 +71,7 @@ The application currently uses these roles internally:
 - `USER`
 - `ADMIN`
 - `ORGANIZER`
-- `STAFF`
+
 
 Important note:
 
